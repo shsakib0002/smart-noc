@@ -2,12 +2,11 @@
 // This file determines which API endpoint to use based on the environment
 
 const API_CONFIG = {
-    // Development (local)
+    // Development (local testing)
     development: 'http://localhost:8000',
     
-    // Production (AmberIT Server)
-    // Replace with your actual AmberIT server URL
-    production: 'https://your-amberit-server.com',  // UPDATE THIS
+    // Production (Your new Render Backend)
+    production: 'https://smart-noc.onrender.com', 
     
     // Auto-detect environment
     getBaseURL: function() {
@@ -17,11 +16,10 @@ const API_CONFIG = {
             window.location.hostname === '') {
             return this.development;
         }
-        // Otherwise use production API
+        // Otherwise use production API (Render)
         return this.production;
     }
 };
 
 // Export for use in HTML
 window.API_BASE = API_CONFIG.getBaseURL();
-
