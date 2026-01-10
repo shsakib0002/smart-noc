@@ -260,7 +260,7 @@
         </div>
     </div>
 
-    <script>
+   <script>
         const API_BASE = window.API_BASE || window.location.origin;
         console.log("Connected to:", API_BASE);
         
@@ -286,7 +286,7 @@
 
         function renderTable(data) {
             const tbody = document.getElementById('inventoryTable');
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: #555;">No Data Found. Import CSV.</td></tr>`;
                 return;
             }
@@ -322,7 +322,6 @@
             document.getElementById('diagPanel').classList.add('open');
 
             // --- POPULATE DATA ---
-            // Identity
             setText('p-name', currentClient.Link_Name || currentClient.Client_Name);
             setText('p-ip', currentClient.Client_IP);
             setText('p-sl', currentClient.SL || currentClient.Link_ID);
@@ -330,13 +329,11 @@
             setText('p-loc', currentClient.Location_Branch || currentClient.Location);
             setText('p-dist', currentClient.District);
 
-            // Device
             setText('p-model', currentClient.Radio_Model || currentClient.Device_Model);
             setText('p-mode', currentClient.Device_Mode);
             setText('p-conn', currentClient.Connection_Type);
             setText('p-linktype', currentClient.Link_Type);
 
-            // RF
             setText('p-bts-name', currentClient.BTS_Name || 'N/A');
             setText('p-bts-ip', currentClient.BTS_IP || currentClient.Base_IP);
             setText('p-ssid', currentClient.SSID);
@@ -345,7 +342,6 @@
             setText('p-rssi', currentClient.RSSI);
             setText('p-gw', currentClient.Gateway_IP || 'Calculating...');
 
-            // Reset Diagnostics UI
             document.getElementById('resultsArea').style.display = 'none';
             const btn = document.getElementById('btnRun');
             btn.disabled = false;
@@ -380,7 +376,6 @@
                 const statusEl = document.getElementById('res-status');
                 statusEl.innerText = data.final_status;
                 
-                // Color Logic
                 statusEl.style.color = data.final_status.includes('UP') ? '#10b981' : (data.final_status.includes('UNSTABLE') ? '#f59e0b' : '#ef4444');
                 document.getElementById('res-cause').innerText = data.cause;
 
@@ -403,6 +398,87 @@
             if (status === 'UP') el.classList.add('up');
             else if (status === 'DOWN') el.classList.add('down');
         }
+
+        // --- SMART CSV PARSER ---
+        document.getElementById('csvInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const text = ev.target.result;
+                const lines = text.split('\n').filter(l => l.trim());
+                if (lines.length < 2) return alert("CSV is empty!");
+
+                // Helper to split CSV lines correctly (handling quotes)
+                const parseLine = (row) => {
+                    const res = [];
+                    let cur = '', inQuote = false;
+                    for (let c of row) {
+                        if (c === '"') { inQuote = !inQuote; }
+                        else if (c === ',' && !inQuote) { res.push(cur.trim()); cur = ''; }
+                        else { cur += c; }
+                    }
+                    res.push(cur.trim());
+                    return res;
+                };
+
+                // 1. Find Header Index
+                const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/[\s_"]/g, ''));
+                console.log("Found Headers:", headers);
+
+                // 2. Map Columns (Find where 'Client IP' or 'Link Name' actually is)
+                const idx = {
+                    linkName: headers.findIndex(h => h.includes('linkname') || h.includes('clientname')),
+                    ip: headers.findIndex(h => h.includes('clientip') || h.includes('ipaddress')),
+                    baseIp: headers.findIndex(h => h.includes('btsip') || h.includes('baseip')),
+                    location: headers.findIndex(h => h.includes('location') || h.includes('branch')),
+                    district: headers.findIndex(h => h.includes('district')),
+                    sl: headers.findIndex(h => h.includes('sl') || h.includes('linkid')),
+                    // Add extra fields
+                    model: headers.findIndex(h => h.includes('model')),
+                    ssid: headers.findIndex(h => h.includes('ssid')),
+                    freq: headers.findIndex(h => h.includes('frequency')),
+                    rssi: headers.findIndex(h => h.includes('rssi'))
+                };
+
+                // 3. Parse Data
+                const payload = lines.slice(1).map(line => {
+                    const col = parseLine(line);
+                    // Must have at least an IP or Name
+                    if (!col[idx.ip] && !col[idx.linkName]) return null;
+
+                    return {
+                        "Link_Name": col[idx.linkName] || col[idx.ip],
+                        "Client_IP": col[idx.ip],
+                        "BTS_IP": col[idx.baseIp],
+                        "Location": col[idx.location],
+                        "District": col[idx.district],
+                        "SL": col[idx.sl],
+                        "Radio_Model": col[idx.model],
+                        "SSID": col[idx.ssid],
+                        "Frequency_Used": col[idx.freq],
+                        "RSSI": col[idx.rssi]
+                    };
+                }).filter(x => x);
+
+                console.log("Payload to Send:", payload);
+
+                if (payload.length === 0) return alert("Could not match columns! Check CSV headers.");
+
+                // 4. Send
+                await fetch(`${API_BASE}/api/inventory`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                alert(`Success! Imported ${payload.length} items.`);
+                loadInventory();
+            };
+            reader.readAsText(file);
+        });
+    </script>
 
         // Import
         document.getElementById('csvInput').addEventListener('change', async (e) => {
