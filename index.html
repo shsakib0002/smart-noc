@@ -1,1 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart NOC Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="config.js"></script>
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary: #6366f1;
+            --accent: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
 
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'Outfit', sans-serif; 
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .page { 
+            display: none; 
+            min-height: 100vh;
+            padding: 0;
+            animation: fadeIn 0.5s ease-in;
+        }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ===== PAGE 1: LANDING/INTRO ===== */
+        .intro-hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+            background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            position: relative;
+            overflow: hidden;
+        }
+        .intro-hero::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            top: -250px;
+            left: -250px;
+            border-radius: 50%;
+        }
+        .intro-hero::after {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            bottom: -250px;
+            right: -250px;
+            border-radius: 50%;
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 900px; }
+        .hero-logo { 
+            font-size: 4rem; 
+            font-weight: 800; 
+            background: linear-gradient(135deg, var(--primary), var(--accent)); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        .hero-logo i { font-size: 3.5rem; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-subtitle { 
+            font-size: 1.5rem; 
+            color: var(--text-muted); 
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+        .hero-description {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            line-height: 2;
+            margin-bottom: 50px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: left;
+            background: var(--glass);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+        }
+        .hero-description h2 {
+            color: white;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-description p {
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+        .hero-description ul {
+            margin: 20px 0;
+            padding-left: 30px;
+        }
+        .hero-description li {
+            margin-bottom: 12px;
+            line-height: 1.8;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .feature-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2);
+        }
+        .feature-card i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        .feature-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .btn-hero {
+            padding: 18px 40px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+            margin-top: 30px;
+        }
+        .btn-hero:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(99, 102, 241, 0.4);
+        }
+
+        /* ===== PAGE 2: OPERATOR/BTS SELECTION ===== */
+        .selection-page {
+            min-height: 100vh;
+            padding: 40px 20px;
+            background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%);
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+        .selection-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .selection-section {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .operator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .operator-card, .bts-card {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .operator-card::before, .bts-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .operator-card:hover::before, .bts-card:hover::before {
+            left: 100%;
+        }
+        .operator-card:hover, .bts-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+        }
+        .operator-card.active, .bts-card.active {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.15);
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.3);
+        }
+        .operator-card i, .bts-card i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        .operator-card h3, .bts-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+        }
+        .bts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .btn-action {
+            padding: 14px 28px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+        .btn-action:hover:not(:disabled) {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+        }
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-back {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            padding: 12px 20px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        .btn-back:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* ===== PAGE 3: CLIENT DETAILS ===== */
+        .client-page {
+            min-height: 100vh;
+            padding: 0;
+        }
+        .client-header {
+            background: var(--glass);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .client-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .client-header .filters {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .search-bar {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border 0.2s;
+            width: 300px;
+        }
+        .search-bar:focus {
+            border-color: var(--primary);
+        }
+        .client-content {
+            padding: 40px;
+        }
+        .table-container {
+            background: var(--glass);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 18px 25px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.2);
+        }
+        td {
+            padding: 18px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+        tr:hover td {
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+        }
+        tr:last-child td { border-bottom: none; }
+        .tag {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .tag-primary { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+        .tag-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .tag-operator { background: rgba(139, 92, 246, 0.15); color: var(--accent); }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        /* DIAGNOSTICS PANEL */
+        .slide-panel {
+            position: fixed;
+            top: 0;
+            right: -650px;
+            width: 650px;
+            height: 100%;
+            background: #0c0c0e;
+            border-left: 1px solid var(--glass-border);
+            z-index: 1000;
+            transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: -20px 0 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+        .slide-panel.open { right: 0; }
+        .panel-header {
+            padding: 30px;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.01);
+        }
+        .panel-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .detail-item {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .detail-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-family: 'JetBrains Mono';
+            font-size: 1rem;
+            color: white;
+            font-weight: 600;
+        }
+        .topology-map {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 40px 0;
+            position: relative;
+            padding: 0 20px;
+        }
+        .topology-line {
+            position: absolute;
+            top: 50%;
+            left: 60px;
+            right: 60px;
+            height: 2px;
+            background: #333;
+            z-index: 0;
+        }
+        .node {
+            width: 90px;
+            height: 90px;
+            background: #18181b;
+            border: 2px solid #333;
+            border-radius: 16px;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+        .node i { margin-bottom: 5px; color: #555; }
+        .node span { font-size: 0.7rem; font-weight: 700; color: #777; margin-top: 5px; }
+        .node.up { border-color: var(--success); box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
+        .node.up i { color: var(--success); }
+        .node.down { border-color: var(--danger); box-shadow: 0 0 20px rgba(239, 68, 68, 0.15); }
+        .node.down i { color: var(--danger); }
+        .node.warn { border-color: var(--warning); box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
+        .node.warn i { color: var(--warning); }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .metric-box {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .metric-val {
+            font-family: 'JetBrains Mono';
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 5px 0;
+            color: white;
+        }
+        .metric-lbl {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .btn-main {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        .btn-main:hover:not(:disabled) {
+            background: #4f46e5;
+            transform: translateY(-2px);
+        }
+        .btn-main:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .hero-logo { font-size: 2.5rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .operator-grid { grid-template-columns: 1fr; }
+            .client-header { flex-direction: column; gap: 15px; }
+            .search-bar { width: 100%; }
+            .slide-panel { width: 100%; right: -100%; }
+            .detail-grid, .metric-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PAGE 1: LANDING/INTRO -->
+    <div id="page-intro" class="page active">
+        <div class="intro-hero">
+            <div class="hero-content">
+                <div class="hero-logo">
+                    <i data-lucide="radio-tower"></i>
+                    <span>SMART NOC</span>
+                </div>
+                <div class="hero-subtitle">Radio Frequency Network Operations Command Center</div>
+                <div class="hero-description">
+                    <h2>World-Class Telecommunications Infrastructure Management</h2>
+                    <p>
+                        Welcome to the Smart NOC Command Center - a cutting-edge platform designed for comprehensive 
+                        Radio Frequency (RF) network management and telecommunications infrastructure monitoring. 
+                        Our world-class system provides real-time visibility and control over wireless point-to-point 
+                        and point-to-multipoint links, ensuring optimal performance across multiple frequency bands.
+                    </p>
+                    <p>
+                        <strong>Radio Frequency Technology Excellence:</strong> Our platform leverages advanced RF 
+                        engineering principles to monitor and manage wireless links operating in various frequency 
+                        ranges including 2.4 GHz, 5 GHz, and other licensed/unlicensed bands. We provide comprehensive 
+                        signal strength monitoring (RSSI), channel analysis, frequency utilization tracking, and 
+                        link quality assessment for world-class network reliability.
+                    </p>
+                    <p>
+                        <strong>Telecommunications Industry Standards:</strong> Built to meet the rigorous demands 
+                        of the telecommunications industry, our system adheres to international RF standards and best 
+                        practices. We support multiple connection types including Point-to-Point (PTP), Point-to-Multipoint 
+                        (PMP), and mesh configurations with advanced device mode management.
+                    </p>
+                    <p>
+                        <strong>Comprehensive Network Coverage:</strong> Monitor and manage Base Transceiver Stations (BTS), 
+                        Points of Presence (POP), and client endpoints across multiple districts and locations. Track 
+                        SSID configurations, channel assignments, frequency types, and link parameters with precision 
+                        engineering-grade accuracy.
+                    </p>
+                    <p>
+                        <strong>Key Capabilities:</strong>
+                    </p>
+                    <ul>
+                        <li><strong>RF Signal Analysis:</strong> Real-time RSSI monitoring, signal quality assessment, and interference detection</li>
+                        <li><strong>Frequency Management:</strong> Track frequency types and utilization across 2.4 GHz, 5 GHz, and other bands</li>
+                        <li><strong>Channel Optimization:</strong> Monitor channel assignments and optimize for minimal interference</li>
+                        <li><strong>Link Type Configuration:</strong> Manage PTP, PMP, and mesh link topologies</li>
+                        <li><strong>Device Management:</strong> Track radio models, device modes, and SSID configurations</li>
+                        <li><strong>Geographic Coverage:</strong> District-level and branch-level location tracking</li>
+                        <li><strong>Multi-Operator Support:</strong> Manage infrastructure for AmberIT, Robi, BL, GP, and other operators</li>
+                    </ul>
+                    <p>
+                        Experience world-class telecommunications infrastructure management with our advanced RF monitoring 
+                        and diagnostics platform. Navigate through our intuitive interface to explore BTS/POP listings and 
+                        detailed client information.
+                    </p>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <i data-lucide="network"></i>
+                        <h3>Network Monitoring</h3>
+                        <p>Real-time monitoring of network links, base stations, and client devices</p>
+                    </div>
+                    <div class="feature-card">
+                        <i data-lucide="activity"></i>
+                        <h3>Diagnostics</h3>
+                        <p>Advanced diagnostic tools for troubleshooting connectivity issues</p>
+                    </div>
+                    <div class="feature-card">
+                        <i data-lucide="database"></i>
+                        <h3>Data Management</h3>
+                        <p>Complete inventory management with device details and performance metrics</p>
+                    </div>
+                    <div class="feature-card">
+                        <i data-lucide="bar-chart-3"></i>
+                        <h3>Analytics</h3>
+                        <p>Signal strength (RSSI), latency, packet loss, and link stability metrics</p>
+                    </div>
+                </div>
+                <button class="btn-hero" onclick="showPage('btspop')">
+                    <span>Explore BTS/POP Network</span>
+                    <i data-lucide="arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 2: BTS/POP LISTING -->
+    <div id="page-btspop" class="page">
+        <button class="btn-back" onclick="showPage('intro')">
+            <i data-lucide="arrow-left"></i>
+            <span>Back</span>
+        </button>
+        <div class="selection-page">
+            <div class="page-header">
+                <h1>BTS & POP Network Overview</h1>
+                <p>Complete listing of Base Transceiver Stations and Points of Presence</p>
+            </div>
+            <div class="selection-container">
+                <div class="selection-section">
+                    <div class="section-title">
+                        <i data-lucide="server"></i>
+                        <span>Filter by POP</span>
+                    </div>
+                    <div style="margin-bottom: 30px;">
+                        <input type="text" id="popSearch" class="search-bar" placeholder="Search POP Name..." style="width: 100%; max-width: 500px;" oninput="filterBTSPOP()">
+                    </div>
+                    <div id="popList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;"></div>
+                </div>
+                <div class="selection-section" id="btsListSection">
+                    <div class="section-title">
+                        <i data-lucide="radio-tower"></i>
+                        <span>Base Transceiver Stations (BTS)</span>
+                        <span id="selectedPOPName" style="font-size: 1rem; color: var(--primary); margin-left: 15px;"></span>
+                    </div>
+                    <div class="bts-grid" id="btsPOPGrid"></div>
+                </div>
+                <div style="text-align: center;">
+                    <button class="btn-action" id="btnViewClients" onclick="continueToClients()" disabled>
+                        <span>View Client Details</span>
+                        <i data-lucide="arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 3: CLIENT DETAILS -->
+    <div id="page-clients" class="page">
+                <button class="btn-back" onclick="showPage('btspop')">
+                    <i data-lucide="arrow-left"></i>
+                    <span>Back</span>
+                </button>
+        <div class="client-page">
+            <div class="client-header">
+                <h2>Client Details - <span id="headerPOP"></span><span id="headerBTS" style="margin-left: 10px;"></span></h2>
+                <div class="filters">
+                    <input type="text" id="clientSearch" class="search-bar" placeholder="Search Link Name, IP, Location, District..." oninput="filterClients()">
+                    <button class="btn-action" onclick="document.getElementById('csvInput').click()">
+                        <i data-lucide="upload-cloud"></i>
+                        <span>Import CSV</span>
+                    </button>
+                    <input type="file" id="csvInput" hidden accept=".csv">
+                </div>
+            </div>
+            <div class="client-content">
+                <div class="table-container" style="overflow-x: auto;">
+                    <table style="min-width: 1600px;">
+                        <thead>
+                            <tr>
+                                <th>SL</th>
+                                <th>Link Name</th>
+                                <th>Location/Branch</th>
+                                <th>District</th>
+                                <th>Connection Type</th>
+                                <th>POP Name</th>
+                                <th>Radio Model</th>
+                                <th>BTS IP</th>
+                                <th>Client IP</th>
+                                <th>Channel</th>
+                                <th>RSSI</th>
+                                <th>SSID</th>
+                                <th>Device Mode</th>
+                                <th>Link Type</th>
+                                <th>Frequency Type</th>
+                                <th>Frequency Used</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientTableBody">
+                            <tr><td colspan="17" style="text-align:center; padding:40px; color:#666;"><i data-lucide="loader-2" class="spin"></i> Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIAGNOSTICS PANEL -->
+    <div id="diagPanel" class="slide-panel">
+        <div class="panel-header">
+            <button onclick="closePanel()" style="float:right; background:none; border:none; color:white; cursor:pointer; font-size: 1.5rem;"><i data-lucide="x"></i></button>
+            <h2 id="p-name">Client Name</h2>
+            <div style="font-family:'JetBrains Mono'; color:var(--primary); margin-top:5px;" id="p-ip">--</div>
+        </div>
+        <div class="panel-body">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Link Name</div>
+                    <div class="detail-value" id="p-link-name">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Location/Branch</div>
+                    <div class="detail-value" id="p-location-branch">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">District</div>
+                    <div class="detail-value" id="p-district">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Connection Type</div>
+                    <div class="detail-value" id="p-connection-type">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">POP Name</div>
+                    <div class="detail-value" id="p-pop-name">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Radio Model</div>
+                    <div class="detail-value" id="p-radio-model">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">BTS IP</div>
+                    <div class="detail-value" id="p-bts-ip">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Client IP</div>
+                    <div class="detail-value" id="p-client-ip">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Channel</div>
+                    <div class="detail-value" id="p-channel">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">RSSI</div>
+                    <div class="detail-value" id="p-rssi">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">SSID</div>
+                    <div class="detail-value" id="p-ssid">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Device Mode</div>
+                    <div class="detail-value" id="p-device-mode">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Link Type</div>
+                    <div class="detail-value" id="p-link-type">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Frequency Type</div>
+                    <div class="detail-value" id="p-frequency-type">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Frequency Used</div>
+                    <div class="detail-value" id="p-frequency-used">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Gateway IP</div>
+                    <div class="detail-value" id="p-gateway-ip">--</div>
+                </div>
+            </div>
+
+            <button class="btn-main" id="btnRun" onclick="runTest()">
+                <i data-lucide="play"></i> Run Diagnostics
+            </button>
+
+            <div id="resultsArea" style="display:none; margin-top: 30px;">
+                <div style="text-align:center; padding: 20px; background:rgba(255,255,255,0.02); border-radius:12px; margin-bottom:20px;">
+                    <div id="res-status" style="font-size:2rem; font-weight:800; color:white;">--</div>
+                    <div id="res-cause" style="color:#aaa; margin-top:5px;">--</div>
+                </div>
+
+                <div class="topology-map">
+                    <div class="topology-line"></div>
+                    <div class="node" id="n-gw"><i data-lucide="server"></i><span>GW</span></div>
+                    <div class="node" id="n-base"><i data-lucide="router"></i><span>BASE</span></div>
+                    <div class="node" id="n-client"><i data-lucide="wifi"></i><span>CLIENT</span></div>
+                </div>
+
+                <div style="font-size:0.8rem; color:#666; text-transform:uppercase; margin-bottom:10px;">Client Telemetry</div>
+                <div class="metric-grid">
+                    <div class="metric-box"><div class="metric-lbl">Signal (RSSI)</div><div class="metric-val" id="m-rssi">--</div><div style="font-size:0.7rem; color:#888;" id="m-stab">--</div></div>
+                    <div class="metric-box"><div class="metric-lbl">Loss</div><div class="metric-val" id="m-loss">--</div></div>
+                    <div class="metric-box"><div class="metric-lbl">Speed</div><div class="metric-val" id="m-lan">--</div></div>
+                    <div class="metric-box"><div class="metric-lbl">Latency</div><div class="metric-val" id="m-lat">--</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // API_BASE is set by config.js
+    // It automatically switches between localhost (development) and production server
+    const API_BASE = window.API_BASE || window.location.origin;
+    console.log('Using API Base URL:', API_BASE);
+    
+    let inventory = [];
+    let currentClient = null;
+    let selectedOperator = null;
+    let selectedBTS = null;
+    let allBTSList = [];
+    let filteredInventory = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        loadOperatorsAndBTS();
+    });
+
+    // Page Navigation
+    let selectedPOP = null;
+    let selectedBTS = null;
+    let allPOPs = [];
+    let allBTS = [];
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${pageId}`).classList.add('active');
+        lucide.createIcons();
+        
+        if (pageId === 'btspop') {
+            loadPOPList();
+        } else if (pageId === 'clients') {
+            loadClientData();
+        }
+    }
+
+    // Load POP List
+    async function loadPOPList() {
+        try {
+            const response = await fetch(`${API_BASE}/api/inventory`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            const data = await response.json();
+            // Extract unique POP names
+            allPOPs = [...new Set(data.map(item => item.POP_Name || item.pop_name).filter(p => p && p !== 'N/A'))];
+            
+            const popList = document.getElementById('popList');
+            if (allPOPs.length === 0) {
+                popList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; grid-column: 1/-1;">No POPs found. Import data to get started.</div>';
+                return;
+            }
+            
+            popList.innerHTML = allPOPs.map(pop => `
+                <div class="operator-card" onclick="selectPOP('${pop}')" data-pop="${pop}">
+                    <i data-lucide="server"></i>
+                    <h3>${pop}</h3>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+            filterBTSPOP();
+        } catch(e) {
+            console.error("Error loading POP list:", e);
+            document.getElementById('popList').innerHTML = '<div style="color: var(--danger); text-align: center; padding: 20px; grid-column: 1/-1;">Error loading POPs: ' + e.message + '</div>';
+        }
+    }
+
+    function selectPOP(pop) {
+        selectedPOP = pop;
+        document.querySelectorAll('[data-pop]').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[data-pop="${pop}"]`).classList.add('active');
+        
+        document.getElementById('selectedPOPName').textContent = pop;
+        loadBTSForPOP(pop);
+    }
+
+    async function loadBTSForPOP(pop) {
+        try {
+            const response = await fetch(`${API_BASE}/api/inventory`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            const data = await response.json();
+            // Filter BTS by POP
+            const btsForPOP = [...new Set(
+                data
+                    .filter(item => (item.POP_Name || item.pop_name) === pop)
+                    .map(item => item.BTS_Name || item.bts_name || item.BTS_IP || item.bts_ip)
+                    .filter(b => b && b !== 'N/A')
+            )];
+            
+            const btsGrid = document.getElementById('btsPOPGrid');
+            if (btsForPOP.length === 0) {
+                btsGrid.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">No BTS found for this POP</div>';
+                document.getElementById('btnViewClients').disabled = true;
+                return;
+            }
+            
+            btsGrid.innerHTML = btsForPOP.map(bts => `
+                <div class="bts-card" onclick="selectBTS('${bts}', '${pop}')" data-bts="${bts}">
+                    <i data-lucide="radio-tower"></i>
+                    <h3>${bts}</h3>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+            document.getElementById('btnViewClients').disabled = false;
+        } catch(e) {
+            console.error("Error loading BTS:", e);
+        }
+    }
+
+    function selectBTS(bts, pop) {
+        selectedBTS = bts;
+        selectedPOP = pop;
+        document.querySelectorAll('.bts-card').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[data-bts="${bts}"]`).classList.add('active');
+        document.getElementById('btnViewClients').disabled = false;
+    }
+
+    function filterBTSPOP() {
+        const searchTerm = document.getElementById('popSearch')?.value.toLowerCase() || '';
+        document.querySelectorAll('[data-pop]').forEach(card => {
+            const popName = card.getAttribute('data-pop').toLowerCase();
+            card.style.display = popName.includes(searchTerm) ? 'block' : 'none';
+        });
+    }
+
+    function continueToClients() {
+        if (selectedPOP) {
+            document.getElementById('headerPOP').textContent = `POP: ${selectedPOP}`;
+            if (selectedBTS) {
+                document.getElementById('headerBTS').textContent = `| BTS: ${selectedBTS}`;
+            } else {
+                document.getElementById('headerBTS').textContent = '';
+            }
+        } else {
+            // If no POP selected, show all clients
+            document.getElementById('headerPOP').textContent = 'All Links';
+            document.getElementById('headerBTS').textContent = '';
+        }
+        showPage('clients');
+    }
+
+    // Client Data Loading
+    async function loadClientData() {
+        try {
+            const tbody = document.getElementById('clientTableBody');
+            tbody.innerHTML = '<tr><td colspan="17" style="text-align:center; padding:40px; color:#666;"><i data-lucide="loader-2" class="spin"></i> Loading...</td></tr>';
+            lucide.createIcons();
+            
+            const response = await fetch(`${API_BASE}/api/inventory`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            let data = await response.json();
+            
+            // Filter by POP and BTS if selected
+            if (selectedPOP) {
+                data = data.filter(item => (item.POP_Name || item.pop_name) === selectedPOP);
+            }
+            if (selectedBTS) {
+                data = data.filter(item => 
+                    (item.BTS_Name || item.bts_name || item.BTS_IP || item.bts_ip) === selectedBTS
+                );
+            }
+            
+            inventory = data;
+            filteredInventory = data;
+            renderClients(data);
+        } catch(e) {
+            console.error("API Error", e);
+            const tbody = document.getElementById('clientTableBody');
+            tbody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding:40px; color:#ef4444;">Error loading data: ${e.message}<br><small style="color:#666;">Make sure the server is running</small></td></tr>`;
+        }
+    }
+
+    function renderClients(data) {
+        const tbody = document.getElementById('clientTableBody');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="17" class="empty-state">
+                        <div><i data-lucide="database"></i></div>
+                        <div style="margin-top: 10px;">No clients found</div>
+                        <div style="font-size: 0.85rem; margin-top: 5px; opacity: 0.7;">Import a CSV file to get started</div>
+                    </td>
+                </tr>
+            `;
+            lucide.createIcons();
+            return;
+        }
+        tbody.innerHTML = data.map((c, index) => `
+            <tr onclick='openDiag(${JSON.stringify(c)})' style="cursor: pointer;">
+                <td style="text-align: center; font-weight: 600; color: var(--text-muted);">${c.SL || (index + 1)}</td>
+                <td style="font-weight:600; color:white;">${c.Link_Name || c.Client_Name || 'N/A'}</td>
+                <td>${c.Location_Branch || c.Location || 'N/A'}</td>
+                <td>${c.District || 'N/A'}</td>
+                <td><span class="tag tag-operator">${c.Connection_Type || 'N/A'}</span></td>
+                <td style="font-weight: 500;">${c.POP_Name || 'N/A'}</td>
+                <td style="font-family:'JetBrains Mono'; font-size:0.85rem;">${c.Radio_Model || c.Device_Model || 'N/A'}</td>
+                <td style="font-family:'JetBrains Mono'; color:#aaa;">${c.BTS_IP || c.Base_IP || 'N/A'}</td>
+                <td style="font-family:'JetBrains Mono'; color:#aaa; font-weight: 600;">${c.Client_IP || 'N/A'}</td>
+                <td style="text-align: center; font-family:'JetBrains Mono'; font-size:0.85rem;">${c.Channel || 'N/A'}</td>
+                <td><span class="tag ${c.RSSI && c.RSSI !== 'N/A' ? 'tag-success' : ''}">${c.RSSI || 'N/A'}</span></td>
+                <td style="font-family:'JetBrains Mono'; font-size:0.85rem;">${c.SSID || 'N/A'}</td>
+                <td><span class="tag">${c.Device_Mode || 'N/A'}</span></td>
+                <td>${c.Link_Type || 'N/A'}</td>
+                <td style="font-family:'JetBrains Mono'; font-size:0.85rem; color: var(--primary);">${c.Frequency_Type || 'N/A'}</td>
+                <td style="font-family:'JetBrains Mono'; font-size:0.85rem; color: var(--accent);">${c.Frequency_Used || 'N/A'}</td>
+                <td><span class="tag tag-primary">Details</span></td>
+            </tr>
+        `).join('');
+        lucide.createIcons();
+    }
+
+    function filterClients() {
+        const term = document.getElementById('clientSearch').value.toLowerCase();
+        filteredInventory = inventory.filter(c => 
+            (c.Link_Name && c.Link_Name.toLowerCase().includes(term)) ||
+            (c.Client_Name && c.Client_Name.toLowerCase().includes(term)) ||
+            (c.Client_IP && c.Client_IP.includes(term)) ||
+            (c.Location_Branch && c.Location_Branch.toLowerCase().includes(term)) ||
+            (c.Location && c.Location.toLowerCase().includes(term)) ||
+            (c.District && c.District.toLowerCase().includes(term)) ||
+            (c.POP_Name && c.POP_Name.toLowerCase().includes(term)) ||
+            (c.Radio_Model && c.Radio_Model.toLowerCase().includes(term)) ||
+            (c.Device_Model && c.Device_Model.toLowerCase().includes(term)) ||
+            (c.SSID && c.SSID.toLowerCase().includes(term))
+        );
+        renderClients(filteredInventory);
+    }
+
+    // CSV Import
+    document.getElementById('csvInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            try {
+                const lines = ev.target.result.split('\n').filter(l => l.trim());
+                if (lines.length < 2) {
+                    alert('CSV file must have at least a header row and one data row');
+                    return;
+                }
+                
+                const parseCSVLine = (line) => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current.trim());
+                    return result;
+                };
+                
+                const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/"/g, '').replace(/\s+/g, '_'));
+                
+                const headerMap = {
+                    // New standard fields
+                    'SL': ['SL', 'Sl', 'sl', 'Serial Number', 'serial number'],
+                    'Link_Name': ['Link_Name', 'Link Name', 'Link', 'link_name', 'link'],
+                    'Location_Branch': ['Location_Branch', 'Location/Branch', 'Location Branch', 'location_branch', 'Branch', 'branch'],
+                    'District': ['District', 'district'],
+                    'Connection_Type': ['Connection_Type', 'Connection Type', 'connection_type', 'Type', 'type'],
+                    'POP_Name': ['POP_Name', 'POP Name', 'POP', 'pop_name', 'Pop'],
+                    'Radio_Model': ['Radio_Model', 'Radio Model', 'radio_model', 'Model', 'model'],
+                    'BTS_IP': ['BTS_IP', 'BTS IP', 'bts_ip', 'Base IP', 'Base_IP', 'base_ip'],
+                    'Client_IP': ['Client_IP', 'Client IP', 'client_ip'],
+                    'Channel': ['Channel', 'channel'],
+                    'RSSI': ['RSSI', 'rssi'],
+                    'SSID': ['SSID', 'ssid'],
+                    'Device_Mode': ['Device_Mode', 'Device Mode', 'device_mode', 'Mode', 'mode'],
+                    'Link_Type': ['Link_Type', 'Link Type', 'link_type'],
+                    'Frequency_Type': ['Frequency_Type', 'Frequency Type', 'frequency_type'],
+                    'Frequency_Used': ['Frequency_Used', 'Frequency Used', 'frequency_used'],
+                    // Legacy fields for backward compatibility
+                    'Link_ID': ['Link_ID', 'Link ID', 'LinkID', 'link_id'],
+                    'BTS_Name': ['BTS_Name', 'BTS Name', 'BTS', 'bts_name'],
+                    'Client_Name': ['Client_Name', 'Client Name', 'Client', 'client_name'],
+                    'Base_IP': ['Base_IP', 'Base IP', 'base_ip'],
+                    'Loopback_IP': ['Loopback_IP', 'Loopback IP', 'Loopback', 'loopback_ip'],
+                    'Location': ['Location', 'location'],
+                    'Operator': ['Operator', 'operator'],
+                    'Device_Name': ['Device_Name', 'Device Name', 'Device', 'device_name'],
+                    'Device_Model': ['Device_Model', 'Device Model', 'Model', 'device_model']
+                };
+                
+                const getFieldName = (header) => {
+                    for (const [field, variations] of Object.entries(headerMap)) {
+                        if (variations.some(v => header.toLowerCase() === v.toLowerCase())) {
+                            return field;
+                        }
+                    }
+                    return header;
+                };
+                
+                const normalizedHeaders = headers.map(h => getFieldName(h));
+                
+                const newData = lines.slice(1).filter(l => l.trim()).map(line => {
+                    const values = parseCSVLine(line);
+                    const link = {};
+                    normalizedHeaders.forEach((field, i) => {
+                        link[field] = (values[i] || '').trim().replace(/"/g, '');
+                    });
+                    // Ensure at least Client_IP or Link_Name exists
+                    if (!link.Client_IP && !link.Link_Name && !link.Client_Name) {
+                        return null;
+                    }
+                    // Map legacy fields to new fields if needed
+                    if (!link.Link_Name && link.Client_Name) {
+                        link.Link_Name = link.Client_Name;
+                    }
+                    if (!link.Location_Branch && link.Location) {
+                        link.Location_Branch = link.Location;
+                    }
+                    if (!link.Radio_Model && link.Device_Model) {
+                        link.Radio_Model = link.Device_Model;
+                    }
+                    if (!link.BTS_IP && link.Base_IP) {
+                        link.BTS_IP = link.Base_IP;
+                    }
+                    if (!link.SL && link.Link_ID) {
+                        link.SL = link.Link_ID;
+                    }
+                    return link;
+                }).filter(link => link !== null);
+                
+                if (newData.length === 0) {
+                    alert('No valid data rows found in CSV file');
+                    return;
+                }
+                
+                const res = await fetch(`${API_BASE}/api/inventory`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(newData)
+                });
+                
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `Server error: ${res.status}`);
+                }
+                
+                const result = await res.json();
+                alert(`Successfully imported ${result.count || newData.length} link(s)!`);
+                loadClientData();
+                e.target.value = '';
+            } catch(e) {
+                alert(`Upload Failed: ${e.message}`);
+                console.error("Import error", e);
+                e.target.value = '';
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    // Diagnostics Panel
+    function openDiag(client) {
+        currentClient = client;
+        const linkName = client.Link_Name || client.Client_Name || 'N/A';
+        document.getElementById('p-name').innerText = linkName;
+        document.getElementById('p-ip').innerText = client.Client_IP || 'N/A';
+        
+        // Populate all detail fields
+        document.getElementById('p-link-name').innerText = linkName;
+        document.getElementById('p-location-branch').innerText = client.Location_Branch || client.Location || 'N/A';
+        document.getElementById('p-district').innerText = client.District || 'N/A';
+        document.getElementById('p-connection-type').innerText = client.Connection_Type || 'N/A';
+        document.getElementById('p-pop-name').innerText = client.POP_Name || 'N/A';
+        document.getElementById('p-radio-model').innerText = client.Radio_Model || client.Device_Model || 'N/A';
+        document.getElementById('p-bts-ip').innerText = client.BTS_IP || client.Base_IP || 'N/A';
+        document.getElementById('p-client-ip').innerText = client.Client_IP || 'N/A';
+        document.getElementById('p-channel').innerText = client.Channel || 'N/A';
+        document.getElementById('p-rssi').innerText = client.RSSI || 'N/A';
+        document.getElementById('p-ssid').innerText = client.SSID || 'N/A';
+        document.getElementById('p-device-mode').innerText = client.Device_Mode || 'N/A';
+        document.getElementById('p-link-type').innerText = client.Link_Type || 'N/A';
+        document.getElementById('p-frequency-type').innerText = client.Frequency_Type || 'N/A';
+        document.getElementById('p-frequency-used').innerText = client.Frequency_Used || 'N/A';
+        document.getElementById('p-gateway-ip').innerText = client.Gateway_IP || 'N/A';
+        
+        document.getElementById('resultsArea').style.display = 'none';
+        document.getElementById('btnRun').disabled = false;
+        document.getElementById('btnRun').innerHTML = `<i data-lucide="play"></i> Run Diagnostics`;
+        document.getElementById('diagPanel').classList.add('open');
+        lucide.createIcons();
+    }
+
+    function closePanel() {
+        document.getElementById('diagPanel').classList.remove('open');
+    }
+
+    async function runTest() {
+        const btn = document.getElementById('btnRun');
+        const resultsArea = document.getElementById('resultsArea');
+        
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Analyzing...`;
+        resultsArea.style.display = 'none';
+        lucide.createIcons();
+        
+        try {
+            const clientName = currentClient.Link_Name || currentClient.Client_Name || 'N/A';
+            const clientIP = currentClient.Client_IP || 'N/A';
+            const res = await fetch(`${API_BASE}/api/diagnose`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name: clientName, ip: clientIP })
+            });
+            
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Server error: ${res.status}`);
+            }
+            
+            const data = await res.json();
+            resultsArea.style.display = 'block';
+
+            const statusEl = document.getElementById('res-status');
+            statusEl.innerText = data.final_status || 'UNKNOWN';
+            if (data.final_status && data.final_status.includes("UP")) {
+                statusEl.style.color = "var(--success)";
+            } else if (data.final_status && data.final_status.includes("UNSTABLE")) {
+                statusEl.style.color = "var(--warning)";
+            } else {
+                statusEl.style.color = "var(--danger)";
+            }
+            document.getElementById('res-cause').innerText = data.cause || 'No diagnosis available';
+
+            const clientData = data.topology?.client?.data || {};
+            document.getElementById('m-rssi').innerText = clientData.rssi || currentClient.RSSI || '--';
+            document.getElementById('m-stab').innerText = clientData.stability || '';
+            document.getElementById('m-loss').innerText = data.topology?.client?.loss || '--';
+            document.getElementById('m-lan').innerText = clientData.lan_speed || '--';
+            document.getElementById('m-lat').innerText = data.topology?.client?.latency || '--';
+
+            if (data.topology) {
+                setNode('n-client', data.topology.client?.status || 'UNKNOWN');
+                setNode('n-base', data.topology.base?.status || 'UNKNOWN');
+                setNode('n-gw', data.topology.gw?.status || 'UNKNOWN');
+            }
+
+        } catch(e) {
+            alert(`Diagnostics Failed: ${e.message}`);
+            console.error("Diagnostics error", e);
+        } 
+        finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="play"></i> Run Diagnostics`;
+            lucide.createIcons();
+        }
+    }
+
+    function setNode(id, status) {
+        const el = document.getElementById(id);
+        el.className = 'node';
+        if(status === 'UP') el.classList.add('up');
+        else if(status === 'DOWN') el.classList.add('down');
+        else el.classList.add('warn');
+    }
+</script>
+</body>
+</html>
