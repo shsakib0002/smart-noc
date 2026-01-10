@@ -260,7 +260,7 @@
         </div>
     </div>
 
-   <script>
+    <script>
         const API_BASE = window.API_BASE || window.location.origin;
         console.log("Connected to:", API_BASE);
         
@@ -474,37 +474,6 @@
                 });
                 
                 alert(`Success! Imported ${payload.length} items.`);
-                loadInventory();
-            };
-            reader.readAsText(file);
-        });
-    </script>
-
-        // Import
-        document.getElementById('csvInput').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (ev) => {
-                const text = ev.target.result;
-                const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-                // Basic CSV Parser (assuming standard format, skipping header)
-                const payload = lines.slice(1).map(line => {
-                    const c = line.split(','); 
-                    if(c.length < 5) return null;
-                    return {
-                        "Client_Name": c[1], "Client_IP": c[5], "Base_IP": c[4],
-                        "Location": c[2], "Link_ID": c[0]
-                        // Note: A real CSV parser handles quotes better, 
-                        // but this works for standard simple CSVs
-                    };
-                }).filter(x => x);
-
-                await fetch(`${API_BASE}/api/inventory`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                alert("Imported!");
                 loadInventory();
             };
             reader.readAsText(file);
