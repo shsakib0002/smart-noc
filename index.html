@@ -3,345 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMBERIT NOC | COMMAND CENTER</title>
-    
+    <title>AMBERIT NOC | PRO</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-
     <style>
-        :root {
-            --bg-deep: #050505;
-            --bg-panel: #0a0f14;
-            --border: #1f2933;
-            --accent: #00f3ff;
-            --success: #00ff9d;
-            --danger: #ff0055;
-            --warning: #ffb800;
-            --text-main: #e0e6ed;
-            --text-muted: #94a3b8;
-        }
-
-        * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--accent) var(--bg-deep); }
+        :root { --bg: #050505; --panel: #0a0f14; --accent: #00f3ff; --success: #00ff9d; --danger: #ff0055; --warn: #ffb800; --text: #e0e6ed; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Rajdhani', sans-serif; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        body {
-            background-color: var(--bg-deep);
-            color: var(--text-main);
-            font-family: 'Rajdhani', sans-serif;
-            margin: 0;
-            height: 100vh;
-            display: grid;
-            grid-template-rows: 60px 100px 1fr; /* Added row for HUD */
-            overflow: hidden;
-            background-image: linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
-        }
-
         /* HEADER */
-        header {
-            background: rgba(10, 15, 20, 0.95);
-            border-bottom: 1px solid var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 25px;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.15);
-            z-index: 100;
-        }
-
-        .brand { font-family: 'JetBrains Mono'; font-size: 1.5rem; font-weight: 700; letter-spacing: 2px; }
+        header { background: rgba(10,15,20,0.95); border-bottom: 1px solid var(--accent); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .brand { font-family: 'JetBrains Mono'; font-size: 1.4rem; font-weight: 700; letter-spacing: 2px; }
         .brand span { color: var(--accent); }
 
-        /* HUD STATS (NEW) */
-        .hud-container {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            padding: 15px 25px;
-            background: rgba(0,0,0,0.5);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .hud-card {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--accent);
-            padding: 10px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
+        /* MAIN CONTENT */
+        .container { flex: 1; overflow: hidden; display: flex; }
+        .table-area { flex: 1; padding: 20px; overflow-y: auto; }
         
-        .hud-card::after {
-            content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
-            background: linear-gradient(45deg, transparent 95%, rgba(255,255,255,0.05));
-            pointer-events: none;
-        }
-
-        .hud-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .hud-value { font-family: 'JetBrains Mono'; font-size: 2rem; font-weight: 700; margin-top: 5px; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
+        th { text-align: left; padding: 15px; color: #888; border-bottom: 2px solid #222; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+        tr.row { background: var(--panel); transition: 0.2s; cursor: pointer; }
+        tr.row:hover { background: #131b24; transform: scale(1.002); border-left: 3px solid var(--accent); }
+        td { padding: 12px 15px; border-bottom: 1px solid #1a1a1a; }
         
-        .border-blue { border-left-color: var(--accent); }
-        .border-green { border-left-color: var(--success); }
-        .border-red { border-left-color: var(--danger); }
-        .border-orange { border-left-color: var(--warning); }
+        .badge { padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; display: inline-block; width: 80px; text-align: center; }
+        .up { background: rgba(0,255,157,0.1); color: var(--success); border: 1px solid var(--success); }
+        .down { background: rgba(255,0,85,0.1); color: var(--danger); border: 1px solid var(--danger); animation: pulse 2s infinite; }
+        .deg { background: rgba(255,184,0,0.1); color: var(--warn); border: 1px solid var(--warn); }
         
-        .text-blue { color: var(--accent); }
-        .text-green { color: var(--success); }
-        .text-red { color: var(--danger); }
-        .text-orange { color: var(--warning); }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* MAIN LAYOUT */
-        .main-container { display: grid; grid-template-columns: 260px 1fr; height: 100%; overflow: hidden; }
-
-        /* SIDEBAR */
-        aside { background: var(--bg-panel); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; }
-        .nav-item { padding: 15px 25px; cursor: pointer; color: var(--text-muted); transition: 0.3s; border-left: 3px solid transparent; font-size: 1.1rem; display: flex; align-items: center; gap: 15px; }
-        .nav-item:hover { background: rgba(255,255,255,0.02); color: white; }
-        .nav-item.active { background: linear-gradient(90deg, rgba(0,243,255,0.1), transparent); border-left-color: var(--accent); color: var(--accent); }
-
-        /* CONTENT */
-        .content { position: relative; height: 100%; overflow: hidden; }
-        .view-panel { display: none; height: 100%; width: 100%; }
-        .view-panel.active { display: block; }
-        .table-wrapper { height: 100%; overflow-y: auto; padding: 20px; }
+        /* INSPECTOR MODAL */
+        #inspector { position: fixed; top: 0; right: -500px; width: 450px; height: 100%; background: #080c10; border-left: 2px solid var(--accent); transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100; box-shadow: -10px 0 50px rgba(0,0,0,0.8); display: flex; flex-direction: column; }
+        #inspector.open { right: 0; }
         
-        table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
-        th { text-align: left; padding: 15px; color: var(--text-muted); font-size: 0.8rem; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--bg-deep); z-index: 10; }
-        tr.data-row { background: var(--bg-panel); transition: 0.2s; }
-        tr.data-row:hover { background: #131b24; transform: translateX(5px); }
-        td { padding: 12px 15px; border-bottom: 1px solid var(--border); }
+        .ins-header { padding: 25px; border-bottom: 1px solid #222; background: #0f151c; }
+        .ins-title { font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 5px; }
+        .ins-sub { color: var(--accent); font-family: 'JetBrains Mono'; font-size: 0.9rem; }
+        
+        .ins-body { padding: 25px; flex: 1; overflow-y: auto; }
+        
+        .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .metric-card { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 6px; border: 1px solid #222; text-align: center; }
+        .metric-val { font-size: 1.4rem; font-weight: 700; color: white; margin: 5px 0; font-family: 'JetBrains Mono'; }
+        .metric-label { font-size: 0.75rem; color: #888; text-transform: uppercase; }
+        
+        .sig-bar-bg { height: 6px; background: #333; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+        .sig-bar-fill { height: 100%; background: var(--success); width: 0%; transition: 1s; }
 
-        .status-badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
-        .st-up { background: rgba(0, 255, 157, 0.1); color: var(--success); }
-        .st-down { background: rgba(255, 0, 85, 0.1); color: var(--danger); animation: pulseRed 2s infinite; }
-        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
+        .btn-trace { width: 100%; padding: 15px; background: var(--accent); color: black; border: none; font-weight: 700; cursor: pointer; font-family: 'JetBrains Mono'; text-transform: uppercase; margin-top: auto; }
+        .btn-trace:hover { background: white; }
+        
+        .close-btn { position: absolute; top: 20px; right: 20px; color: #666; cursor: pointer; font-size: 1.5rem; }
+        .close-btn:hover { color: white; }
 
-        .btn-scan { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 5px 15px; cursor: pointer; font-family: 'JetBrains Mono'; font-size: 0.75rem; }
-        .btn-scan:hover { background: var(--accent); color: black; }
-
-        /* TERMINAL OVERLAY */
-        #terminal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 1000; display: none; justify-content: center; align-items: center; }
-        .terminal-window { width: 900px; height: 600px; background: #050505; border: 1px solid var(--border); box-shadow: 0 0 50px rgba(0,0,0,0.8); display: grid; grid-template-rows: 40px 1fr 60px; border-radius: 8px; }
-        .term-header { background: #111; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; font-family: 'JetBrains Mono'; color: #888; }
-        .term-body { background: rgba(0, 10, 5, 0.95); padding: 20px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #cfc; line-height: 1.6; }
-        .term-footer { background: #111; padding: 10px 20px; display: flex; justify-content: flex-end; border-top: 1px solid #333; }
-        .log-time { color: #555; margin-right: 10px; }
-        .log-success { color: var(--success); } .log-fail { color: var(--danger); } .log-info { color: var(--accent); }
-
-        .leaflet-layer { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+        /* TERMINAL LOG */
+        #log-area { background: black; padding: 15px; font-family: 'JetBrains Mono'; font-size: 0.8rem; height: 200px; overflow-y: auto; color: #0f0; border-top: 1px solid #222; display: none; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="brand"><i class="fas fa-network-wired"></i> AMBERIT <span>NOC CORE</span></div>
-    <div style="font-family:'JetBrains Mono'; font-size:0.9rem; color:var(--text-muted);">
-        <i class="fas fa-server"></i> SERVER: <span style="color:var(--success)">ONLINE</span>
-    </div>
+    <div class="brand">AMBERIT <span>NOC PRO</span></div>
+    <div style="font-size:0.9rem; color:#666;">LIVE MONITORING ACTIVE</div>
 </header>
 
-<div class="hud-container">
-    <div class="hud-card border-blue">
-        <div class="hud-label">Total Inventory</div>
-        <div class="hud-value text-blue" id="hud-total">0</div>
-    </div>
-    <div class="hud-card border-green">
-        <div class="hud-label">Links Online</div>
-        <div class="hud-value text-green" id="hud-up">0</div>
-    </div>
-    <div class="hud-card border-red">
-        <div class="hud-label">Critical / Down</div>
-        <div class="hud-value text-red" id="hud-down">0</div>
-    </div>
-    <div class="hud-card border-orange">
-        <div class="hud-label">Degraded Signal</div>
-        <div class="hud-value text-orange" id="hud-warn">0</div>
+<div class="container">
+    <div class="table-area">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Client Name</th>
+                    <th>POP</th>
+                    <th>IP Address</th>
+                    <th>Signal (RSSI)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                </tbody>
+        </table>
     </div>
 </div>
 
-<div class="main-container">
-    <aside>
-        <div class="nav-item active" onclick="switchView('list')"><i class="fas fa-list"></i> Network Grid</div>
-        <div class="nav-item" onclick="switchView('map')"><i class="fas fa-globe-asia"></i> Geospatial Map</div>
-        <div class="nav-item" onclick="location.reload()"><i class="fas fa-sync"></i> System Refresh</div>
-    </aside>
-
-    <div class="content">
-        <div id="view-list" class="view-panel active">
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Link ID</th>
-                            <th>Link Name</th>
-                            <th>POP Node</th>
-                            <th>Target IP</th>
-                            <th>Status</th>
-                            <th>Diagnostics</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-body">
-                        <tr><td colspan="6" style="text-align:center; padding:50px;">CONNECTING TO BACKEND...</td></tr>
-                    </tbody>
-                </table>
+<div id="inspector">
+    <div class="close-btn" onclick="closeInspector()">&times;</div>
+    <div class="ins-header">
+        <div class="ins-title" id="ins-name">Select Link</div>
+        <div class="ins-sub" id="ins-ip">Waiting for selection...</div>
+    </div>
+    
+    <div class="ins-body">
+        <h4 style="color:#666; margin-top:0;">PHYSICAL LAYER</h4>
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-label">Ethernet Speed</div>
+                <div class="metric-val" id="ins-speed">--</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Duplex Mode</div>
+                <div class="metric-val" id="ins-duplex">--</div>
             </div>
         </div>
 
-        <div id="view-map" class="view-panel">
-            <div id="map" style="width:100%; height:100%;"></div>
+        <h4 style="color:#666;">RF SIGNAL HEALTH</h4>
+        <div class="metric-card" style="text-align:left;">
+            <div style="display:flex; justify-content:space-between;">
+                <div class="metric-label">RSSI STRENGTH</div>
+                <div class="metric-val" style="font-size:1rem;" id="ins-rssi">-- dBm</div>
+            </div>
+            <div class="sig-bar-bg"><div class="sig-bar-fill" id="ins-bar"></div></div>
+        </div>
+        
+        <h4 style="color:#666; margin-top:25px;">DEVICE INFO</h4>
+        <div style="font-size:0.9rem; line-height:1.8; color:#ccc;">
+            <div>Vendor: <span style="float:right; color:white" id="ins-vendor">--</span></div>
+            <div>Model: <span style="float:right; color:white" id="ins-model">--</span></div>
+            <div>POP Node: <span style="float:right; color:white" id="ins-pop">--</span></div>
         </div>
     </div>
-</div>
 
-<div id="terminal-overlay">
-    <div class="terminal-window">
-        <div class="term-header">
-            <div id="term-title">DIAGNOSTIC TERMINAL</div>
-            <div style="color:var(--accent)">SECURE</div>
-        </div>
-        <div class="term-body" id="term-log"></div>
-        <div class="term-footer">
-            <button class="btn-scan" style="background:var(--danger); color:white;" onclick="stopScan()">TERMINATE SESSION</button>
-        </div>
-    </div>
+    <div id="log-area"></div>
+    <button class="btn-trace" id="btn-trace">RUN LIVE TRACE ROUTE</button>
 </div>
-
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
 <script>
-    // ***************************************************************
-    // ⚠️ PASTE YOUR NGROK URL HERE:
+    // **********************************************
+    // ⚠️ UPDATE YOUR NGROK URL HERE:
     const API_BASE = "https://alpha-nonstudious-traumatically.ngrok-free.dev"; 
-    // ***************************************************************
+    // **********************************************
 
     let inventory = [];
-    let map = null;
-    let scanInterval = null;
-    let isScanning = false;
 
-    window.onload = function() {
-        loadInventory();
-        setInterval(loadInventory, 10000); // Fast refresh (10s)
-    };
+    window.onload = () => { loadData(); setInterval(loadData, 10000); };
 
-    async function loadInventory() {
+    async function loadData() {
         try {
-            const res = await fetch(`${API_BASE}/api/inventory`, {
-                headers: { "ngrok-skip-browser-warning": "69420" }
-            });
+            const res = await fetch(`${API_BASE}/api/inventory`, { headers: {"ngrok-skip-browser-warning": "1"} });
             inventory = await res.json();
-            updateHUD();
             renderTable();
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
-    function updateHUD() {
-        const total = inventory.length;
-        const up = inventory.filter(i => i.status === 'UP').length;
-        const down = inventory.filter(i => i.status === 'DOWN').length;
-        const deg = inventory.filter(i => i.status === 'DEGRADED').length;
-
-        document.getElementById('hud-total').innerText = total;
-        document.getElementById('hud-up').innerText = up;
-        document.getElementById('hud-down').innerText = down;
-        document.getElementById('hud-warn').innerText = deg;
+        } catch(e) { console.error(e); }
     }
 
     function renderTable() {
-        const tbody = document.getElementById('inventory-body');
-        tbody.innerHTML = '';
-        
-        inventory.forEach(link => {
-            let statusClass = 'st-up';
-            let icon = 'fa-check-circle';
+        const tb = document.getElementById('table-body');
+        tb.innerHTML = '';
+        inventory.forEach(i => {
+            let status = 'up';
+            if(i.status === 'DOWN') status = 'down';
+            if(i.status === 'DEGRADED') status = 'deg';
             
-            if(link.status === 'DOWN') { statusClass = 'st-down'; icon = 'fa-times-circle'; }
-            if(link.status === 'DEGRADED') { statusClass = 'st-deg'; icon = 'fa-exclamation-triangle'; }
+            // Color code RSSI
+            let rssiColor = '#666';
+            if(i.rssi < 0) rssiColor = i.rssi > -65 ? 'var(--success)' : (i.rssi > -75 ? 'var(--warn)' : 'var(--danger)');
 
-            const row = `
-                <tr class="data-row">
-                    <td style="font-family:'JetBrains Mono'; color:var(--accent)">#${link.id}</td>
-                    <td style="font-weight:700">${link.name}</td>
-                    <td>${link.pop || '-'}</td>
-                    <td style="font-family:'JetBrains Mono'">${link.ip}</td>
-                    <td><div class="status-badge ${statusClass}"><i class="fas ${icon}"></i> ${link.status}</div></td>
-                    <td><button class="btn-scan" onclick="startContinuousScan(${link.id}, '${link.name}')">TRACE ROUTE</button></td>
+            tb.innerHTML += `
+                <tr class="row" onclick="openInspector(${i.id})">
+                    <td style="color:var(--accent); font-family:'JetBrains Mono'">#${i.link_id_str || i.id}</td>
+                    <td style="font-weight:700">${i.name}</td>
+                    <td>${i.pop}</td>
+                    <td style="font-family:'JetBrains Mono'">${i.ip}</td>
+                    <td style="color:${rssiColor}; font-weight:bold;">${i.rssi ? i.rssi + ' dBm' : 'N/A'}</td>
+                    <td><span class="badge ${status}">${i.status}</span></td>
                 </tr>
             `;
-            tbody.innerHTML += row;
         });
     }
 
-    function startContinuousScan(id, name) {
-        document.getElementById('terminal-overlay').style.display = 'flex';
-        document.getElementById('term-log').innerHTML = '';
-        document.getElementById('term-title').innerText = `TARGET: ${name}`;
-        
-        isScanning = true;
-        writeLog('SYSTEM', 'INITIALIZING CONTINUOUS DIAGNOSTIC SEQUENCE...', 'log-info');
+    // --- INSPECTOR LOGIC ---
+    function openInspector(id) {
+        const item = inventory.find(x => x.id === id);
+        if(!item) return;
 
-        runSingleScan(id);
-        scanInterval = setInterval(() => { if(isScanning) runSingleScan(id); }, 2000);
+        document.getElementById('inspector').classList.add('open');
+        
+        // Fill Data
+        document.getElementById('ins-name').innerText = item.name;
+        document.getElementById('ins-ip').innerText = item.ip;
+        document.getElementById('ins-pop').innerText = item.pop;
+        document.getElementById('ins-model').innerText = item.model || 'Unknown';
+        document.getElementById('ins-vendor').innerText = item.vendor || 'Generic';
+        
+        // Tech Data (With Colors)
+        const speedEl = document.getElementById('ins-speed');
+        speedEl.innerText = item.eth_speed;
+        speedEl.style.color = item.eth_speed === '100Mbps' ? 'var(--warn)' : 'var(--success)';
+
+        const duplexEl = document.getElementById('ins-duplex');
+        duplexEl.innerText = item.eth_duplex;
+        duplexEl.style.color = item.eth_duplex === 'Half Duplex' ? 'var(--danger)' : 'var(--success)';
+
+        // RSSI Bar
+        const rssi = item.rssi || 0;
+        document.getElementById('ins-rssi').innerText = rssi + ' dBm';
+        
+        // Calc Bar Width ( -90 is empty, -40 is full )
+        let pct = 0;
+        if(rssi < 0) pct = Math.max(0, Math.min(100, (rssi + 100) * 2)); 
+        document.getElementById('ins-bar').style.width = pct + '%';
+        document.getElementById('ins-bar').style.background = pct > 70 ? 'var(--success)' : (pct > 40 ? 'var(--warn)' : 'var(--danger)');
+
+        // Trace Button Action
+        document.getElementById('btn-trace').onclick = () => runTrace(item.id);
+        
+        // Hide logs initially
+        document.getElementById('log-area').style.display = 'none';
+        document.getElementById('log-area').innerHTML = '';
     }
 
-    async function runSingleScan(id) {
+    function closeInspector() {
+        document.getElementById('inspector').classList.remove('open');
+    }
+
+    async function runTrace(id) {
+        const log = document.getElementById('log-area');
+        log.style.display = 'block';
+        log.innerHTML = '> INITIALIZING TRIPLE-HOP TRACE...\n';
+        
         try {
             const res = await fetch(`${API_BASE}/api/scan/${id}`, { 
-                method: 'POST',
-                headers: { "ngrok-skip-browser-warning": "69420" }
+                method: 'POST', 
+                headers: {"ngrok-skip-browser-warning": "1"} 
             });
             const data = await res.json();
-            const time = new Date().toLocaleTimeString('en-US', {hour12:false});
-            
-            // Log Line
-            const logDiv = document.getElementById('term-log');
-            logDiv.innerHTML += `<div style="border-top:1px dashed #222; margin:5px 0"></div>`;
             
             data.hops.forEach(hop => {
-                const color = hop.status === 'UP' ? 'log-success' : 'log-fail';
-                const msg = `[${hop.label}] ${hop.ip} -> ${hop.status} (${hop.latency}ms)`;
-                writeLog(time, msg, color);
+                const color = hop.status === 'UP' ? '#0f0' : '#f00';
+                log.innerHTML += `> [${hop.label}] ${hop.ip} -> <span style="color:${color}">${hop.status}</span> (${hop.latency}ms)\n`;
             });
             
-            logDiv.scrollTop = logDiv.scrollHeight;
-        } catch(e) { stopScan(); }
-    }
-
-    function writeLog(prefix, msg, color) {
-        document.getElementById('term-log').innerHTML += `<div class="log-line"><span class="log-time">[${prefix}]</span> <span class="${color}">${msg}</span></div>`;
-    }
-
-    function stopScan() {
-        isScanning = false;
-        clearInterval(scanInterval);
-        document.getElementById('terminal-overlay').style.display = 'none';
-    }
-
-    function switchView(v) {
-        document.querySelectorAll('.view-panel').forEach(e => e.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-        document.getElementById('view-'+v).classList.add('active');
-        if(v==='map') initMap();
-    }
-
-    function initMap() {
-        if(map) return;
-        setTimeout(() => {
-            map = L.map('map').setView([23.8103, 90.4125], 11);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            inventory.forEach(i => {
-                const lat = 23.8 + (Math.random() * 0.2 - 0.1);
-                const lng = 90.4 + (Math.random() * 0.2 - 0.1);
-                const color = i.status === 'UP' ? '#00ff9d' : '#ff0055';
-                L.circleMarker([lat, lng], { radius: 6, color: color }).addTo(map).bindPopup(i.name);
-            });
-        }, 100);
+            log.innerHTML += `> ETHERNET: ${data.eth_speed} / ${data.eth_duplex}\n`;
+            log.innerHTML += `> DIAGNOSTIC COMPLETE.\n`;
+        } catch(e) {
+            log.innerHTML += '> ERROR: CONNECTION FAILED.';
+        }
     }
 </script>
+
 </body>
 </html>
