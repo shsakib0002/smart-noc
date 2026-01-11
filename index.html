@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMBERIT NOC | OS V2.0</title>
+    <title>AMBERIT NOC | OS V2.5</title>
     
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -153,13 +153,20 @@
         .alert-row:hover { background: rgba(255, 0, 85, 0.1); }
 
         /* --- INVENTORY TABLE --- */
+        .table-container { height: calc(100% - 100px); overflow-y: auto; }
         table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
-        th { text-align: left; color: var(--text-muted); padding: 15px; border-bottom: 2px solid #222; font-size: 0.85rem; text-transform: uppercase; }
+        th { text-align: left; color: var(--text-muted); padding: 15px; border-bottom: 2px solid #222; font-size: 0.85rem; text-transform: uppercase; position:sticky; top:0; background:var(--bg-deep); z-index:10; }
         td { background: var(--bg-card); padding: 15px; border-top: 1px solid #222; border-bottom: 1px solid #222; }
         td:first-child { border-left: 1px solid #222; border-radius: 6px 0 0 6px; }
         td:last-child { border-right: 1px solid #222; border-radius: 0 6px 6px 0; }
         
         tr.row-item:hover td { background: #1a2430; cursor: pointer; color: white; }
+
+        /* PAGINATION CONTROLS */
+        #pagination-controls { display:flex; justify-content:center; gap:20px; padding:20px; align-items:center; border-top:var(--border); margin-top:10px; }
+        .page-btn { padding:8px 20px; background:#131b24; border:1px solid #333; color:white; cursor:pointer; font-family:'Rajdhani'; transition:0.2s; }
+        .page-btn:hover:not(:disabled) { background:var(--accent-blue); }
+        .page-btn:disabled { opacity:0.5; cursor:not-allowed; }
         
         /* --- DEEP DIVE (FULL PAGE OVERLAY) --- */
         #deep-dive-page {
@@ -269,27 +276,32 @@
             </div>
         </div>
 
-        <div id="view-inventory" class="page-view">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+        <div id="view-inventory" class="page-view" style="display:none; flex-direction:column; padding:0;">
+            <div style="padding:20px 40px; border-bottom:var(--border);">
                 <input type="text" id="search" placeholder="Search Client, IP, or POP..." 
                        style="background:#131b24; border:var(--border); padding:10px 20px; color:white; width:300px; border-radius:4px;"
                        onkeyup="filterInventory()">
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Client Identity</th>
-                        <th>POP Node</th>
-                        <th>IP Address</th>
-                        <th>Signal</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="inventory-body">
-                    </tbody>
-            </table>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Client Identity</th>
+                            <th>POP Node</th>
+                            <th>IP Address</th>
+                            <th>Signal</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-body">
+                        </tbody>
+                </table>
+            </div>
+
+            <div id="pagination-controls"></div>
         </div>
 
         <div id="view-map" class="page-view" style="padding:0;">
@@ -312,23 +324,23 @@
             <div class="dd-sidebar">
                 <div class="tech-box" style="border-left:3px solid var(--accent-cyan)">
                     <div class="tech-lbl">Device Vendor</div>
-                    <div class="tech-val" id="dd-vendor">Ubiquiti</div>
-                    <div id="dd-model" style="color:#888; font-size:0.9rem">PowerBeam M5</div>
+                    <div class="tech-val" id="dd-vendor">--</div>
+                    <div id="dd-model" style="color:#888; font-size:0.9rem">--</div>
                 </div>
 
                 <div class="tech-box" style="border-left:3px solid var(--accent-blue)">
                     <div class="tech-lbl">POP Location</div>
-                    <div class="tech-val" id="dd-pop">Dhaka North</div>
+                    <div class="tech-val" id="dd-pop">--</div>
                 </div>
 
                 <div class="tech-box">
                     <div class="tech-lbl">Ethernet Speed</div>
-                    <div class="tech-val" id="dd-speed">100Mbps</div>
+                    <div class="tech-val" id="dd-speed">--</div>
                 </div>
                 
                 <div class="tech-box">
                     <div class="tech-lbl">Duplex Mode</div>
-                    <div class="tech-val" id="dd-duplex">Full</div>
+                    <div class="tech-val" id="dd-duplex">--</div>
                 </div>
 
                 <button class="dd-back-btn" style="width:100%; background:var(--accent-cyan); color:black; border:none; font-weight:bold;" onclick="runLiveTrace()">
@@ -359,26 +371,37 @@
         // **********************************************
 
         let inventory = [];
+        let filteredInventory = [];
         let map = null;
         let activeLinkID = null;
+        
+        // PAGINATION SETTINGS
+        let currentPage = 1;
+        const rowsPerPage = 50;
 
         // --- INIT ---
         window.onload = function() {
             loadData();
-            setInterval(loadData, 15000); // Auto-refresh every 15s
+            setInterval(loadData, 20000); // Auto-refresh every 20s
         };
 
         // --- NAVIGATION ---
         function navTo(viewId) {
-            // Update Sidebar
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
 
-            // Update View
-            document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-' + viewId).classList.add('active');
+            document.querySelectorAll('.page-view').forEach(el => {
+                el.classList.remove('active');
+                el.style.display = 'none';
+            });
+            
+            const target = document.getElementById('view-' + viewId);
+            target.classList.add('active');
+            
+            // Flex fix for inventory
+            if(viewId === 'inventory') target.style.display = 'flex';
+            else target.style.display = 'block';
 
-            // Header Title
             const titles = { 'dashboard': 'Command Center', 'inventory': 'Inventory Grid', 'map': 'Geospatial Map' };
             document.getElementById('header-title').innerText = titles[viewId];
 
@@ -392,25 +415,25 @@
                 inventory = await res.json();
                 
                 refreshDashboard();
-                refreshInventory();
+                // If we are currently on the inventory page, refresh it
+                if(document.getElementById('view-inventory').classList.contains('active')) {
+                    refreshInventory();
+                }
             } catch(e) { console.error("API Error", e); }
         }
 
         // --- DASHBOARD LOGIC ---
         function refreshDashboard() {
-            // Calculate Stats
             const total = inventory.length;
             const up = inventory.filter(i => i.status === 'UP').length;
             const down = inventory.filter(i => i.status === 'DOWN').length;
             const warn = inventory.filter(i => i.status === 'DEGRADED').length;
 
-            // Update Cards
             document.getElementById('d-total').innerText = total;
             document.getElementById('d-up').innerText = up;
             document.getElementById('d-down').innerText = down;
             document.getElementById('d-warn').innerText = warn;
 
-            // Update Alert List (Only show Down/Degraded)
             const alerts = inventory.filter(i => i.status !== 'UP');
             const alertList = document.getElementById('alert-list');
             alertList.innerHTML = '';
@@ -422,8 +445,8 @@
                     alertList.innerHTML += `
                         <div class="alert-row" onclick="openDeepDive(${i.id})">
                             <div>
-                                <div style="font-weight:700">${i.name}</div>
-                                <div style="font-size:0.8rem; opacity:0.7">POP: ${i.pop} | IP: ${i.ip}</div>
+                                <div style="font-weight:700">${i.name || 'Unknown Client'}</div>
+                                <div style="font-size:0.8rem; opacity:0.7">POP: ${i.pop || '-'} | IP: ${i.ip}</div>
                             </div>
                             <span class="badge bg-crit">${i.status}</span>
                         </div>
@@ -432,30 +455,40 @@
             }
         }
 
-        // --- INVENTORY LOGIC ---
+        // --- INVENTORY LOGIC (PAGINATED) ---
         function refreshInventory() {
             const tbody = document.getElementById('inventory-body');
             tbody.innerHTML = '';
             
             const filter = document.getElementById('search').value.toLowerCase();
             
-            inventory.forEach(i => {
-                // Search Filter
-                if(filter && !JSON.stringify(i).toLowerCase().includes(filter)) return;
+            // 1. Filter
+            filteredInventory = inventory.filter(i => {
+                return !filter || JSON.stringify(i).toLowerCase().includes(filter);
+            });
 
+            // 2. Paginate
+            const totalPages = Math.ceil(filteredInventory.length / rowsPerPage);
+            if(currentPage > totalPages) currentPage = 1;
+            
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const pageData = filteredInventory.slice(start, end);
+
+            // 3. Render
+            pageData.forEach(i => {
                 let badge = 'bg-ok';
                 if(i.status === 'DOWN') badge = 'bg-crit';
                 if(i.status === 'DEGRADED') badge = 'bg-warn';
 
-                // RSSI Color
                 let rssiColor = '#666';
                 if(i.rssi < 0) rssiColor = i.rssi > -65 ? 'var(--status-ok)' : 'var(--status-crit)';
 
                 tbody.innerHTML += `
                     <tr class="row-item" onclick="openDeepDive(${i.id})">
                         <td style="color:var(--accent-cyan); font-family:'JetBrains Mono'">#${i.link_id_str || i.id}</td>
-                        <td style="font-weight:600">${i.name}</td>
-                        <td>${i.pop}</td>
+                        <td style="font-weight:600">${i.name || 'Unknown Client'}</td>
+                        <td>${i.pop || '-'}</td>
                         <td style="font-family:'JetBrains Mono'">${i.ip}</td>
                         <td style="color:${rssiColor}; font-weight:bold">${i.rssi ? i.rssi + ' dBm' : '-'}</td>
                         <td><span class="badge ${badge}">${i.status}</span></td>
@@ -463,18 +496,38 @@
                     </tr>
                 `;
             });
+
+            // 4. Update Controls
+            updatePaginationControls(totalPages);
         }
 
-        function filterInventory() { refreshInventory(); }
+        function updatePaginationControls(totalPages) {
+            const controls = document.getElementById('pagination-controls');
+            controls.innerHTML = `
+                <button class="page-btn" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>
+                <span style="font-family:'Rajdhani'; font-weight:bold;">Page ${currentPage} of ${totalPages || 1}</span>
+                <button class="page-btn" onclick="changePage(1)" ${currentPage >= totalPages ? 'disabled' : ''}>Next</button>
+            `;
+        }
 
-        // --- DEEP DIVE (THE NEW DETAIL PAGE) ---
+        function changePage(dir) {
+            currentPage += dir;
+            refreshInventory();
+            document.querySelector('.table-container').scrollTop = 0;
+        }
+
+        function filterInventory() { 
+            currentPage = 1; 
+            refreshInventory(); 
+        }
+
+        // --- DEEP DIVE ---
         function openDeepDive(id) {
             const item = inventory.find(x => x.id === id);
             if(!item) return;
             activeLinkID = id;
 
-            // Populate Fields
-            document.getElementById('dd-name').innerText = item.name;
+            document.getElementById('dd-name').innerText = item.name || 'Unknown Client';
             document.getElementById('dd-ip').innerText = item.ip;
             document.getElementById('dd-vendor').innerText = item.vendor || 'Unknown';
             document.getElementById('dd-model').innerText = item.model || '';
@@ -482,17 +535,13 @@
             document.getElementById('dd-speed').innerText = item.eth_speed || 'N/A';
             document.getElementById('dd-duplex').innerText = item.eth_duplex || 'N/A';
 
-            // Signal Bar
             const rssi = item.rssi || 0;
             let pct = 0;
             if(rssi < 0) pct = Math.max(0, Math.min(100, (rssi + 100) * 2));
             document.getElementById('dd-bar').style.width = pct + "%";
             document.getElementById('dd-bar').style.background = pct > 60 ? 'var(--status-ok)' : 'var(--status-crit)';
 
-            // Clear Terminal
             document.getElementById('dd-terminal').innerHTML = '> READY TO TRACE.<br>';
-
-            // Show Overlay
             document.getElementById('deep-dive-page').style.display = 'grid';
         }
 
@@ -531,7 +580,7 @@
                     const lat = 23.8 + (Math.random() * 0.2 - 0.1);
                     const lng = 90.4 + (Math.random() * 0.2 - 0.1);
                     const color = i.status === 'UP' ? '#00ff9d' : '#ff0055';
-                    L.circleMarker([lat, lng], { radius:5, color: color, fillOpacity:0.8 }).addTo(map).bindPopup(i.name);
+                    L.circleMarker([lat, lng], { radius:5, color: color, fillOpacity:0.8 }).addTo(map).bindPopup(i.name || 'Client');
                 });
             }, 100);
         }
