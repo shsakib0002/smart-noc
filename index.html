@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMBERIT NOC | MASTER CONTROL</title>
+    <title>AMBERIT NOC | COMMAND CENTER</title>
     
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -14,8 +14,7 @@
             --bg-deep: #050505;
             --bg-panel: #0a0f14;
             --border: #1f2933;
-            --accent: #00f3ff; /* Cyber Cyan */
-            --accent-dim: rgba(0, 243, 255, 0.1);
+            --accent: #00f3ff;
             --success: #00ff9d;
             --danger: #ff0055;
             --warning: #ffb800;
@@ -32,251 +31,106 @@
             margin: 0;
             height: 100vh;
             display: grid;
-            grid-template-rows: 60px 1fr;
+            grid-template-rows: 60px 100px 1fr; /* Added row for HUD */
             overflow: hidden;
-            background-image: 
-                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-image: linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
             background-size: 30px 30px;
         }
 
         /* HEADER */
         header {
-            background: rgba(10, 15, 20, 0.9);
+            background: rgba(10, 15, 20, 0.95);
             border-bottom: 1px solid var(--accent);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 25px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.15);
             z-index: 100;
         }
 
-        .brand {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-main);
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px var(--accent);
-        }
+        .brand { font-family: 'JetBrains Mono'; font-size: 1.5rem; font-weight: 700; letter-spacing: 2px; }
         .brand span { color: var(--accent); }
 
-        .system-status {
-            font-size: 0.9rem;
-            color: var(--success);
-            border: 1px solid var(--success);
-            padding: 5px 15px;
-            border-radius: 4px;
-            background: rgba(0, 255, 157, 0.05);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* MAIN LAYOUT */
-        .main-container {
+        /* HUD STATS (NEW) */
+        .hud-container {
             display: grid;
-            grid-template-columns: 260px 1fr;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        /* SIDEBAR */
-        aside {
-            background: var(--bg-panel);
-            border-right: 1px solid var(--border);
-            padding: 20px 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .nav-item {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
             padding: 15px 25px;
-            cursor: pointer;
-            color: var(--text-muted);
-            transition: 0.3s;
-            border-left: 3px solid transparent;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.02); color: white; }
-        .nav-item.active {
-            background: linear-gradient(90deg, var(--accent-dim), transparent);
-            border-left-color: var(--accent);
-            color: var(--accent);
-            text-shadow: 0 0 8px var(--accent);
-        }
-
-        /* CONTENT AREA */
-        .content {
-            position: relative;
-            height: 100%;
-            overflow: hidden;
-        }
-        
-        .view-panel {
-            display: none;
-            height: 100%;
-            width: 100%;
-            animation: fadeIn 0.3s ease;
-        }
-        .view-panel.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* DATA TABLE */
-        .table-wrapper {
-            height: 100%;
-            overflow-y: auto;
-            padding: 20px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0 8px; /* Gap between rows */
-        }
-        
-        th {
-            text-align: left;
-            padding: 15px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 1px;
-            border-bottom: 2px solid var(--border);
-        }
-
-        tr.data-row {
-            background: var(--bg-panel);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        tr.data-row:hover {
-            transform: scale(1.005);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            background: #131b24;
-        }
-        
-        td {
-            padding: 15px;
-            border-top: 1px solid var(--border);
+            background: rgba(0,0,0,0.5);
             border-bottom: 1px solid var(--border);
         }
-        td:first-child { border-left: 1px solid var(--border); border-radius: 6px 0 0 6px; }
-        td:last-child { border-right: 1px solid var(--border); border-radius: 0 6px 6px 0; }
 
-        /* STATUS BADGES */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-        }
-        .st-up { background: rgba(0, 255, 157, 0.1); color: var(--success); border: 1px solid rgba(0, 255, 157, 0.3); box-shadow: 0 0 10px rgba(0,255,157,0.2); }
-        .st-down { background: rgba(255, 0, 85, 0.1); color: var(--danger); border: 1px solid rgba(255, 0, 85, 0.3); box-shadow: 0 0 10px rgba(255,0,85,0.2); }
-        .st-deg { background: rgba(255, 184, 0, 0.1); color: var(--warning); border: 1px solid rgba(255, 184, 0, 0.3); }
-
-        /* ACTION BUTTON */
-        .btn-scan {
-            background: transparent;
-            color: var(--accent);
-            border: 1px solid var(--accent);
-            padding: 8px 20px;
-            cursor: pointer;
-            font-family: 'JetBrains Mono', monospace;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            transition: 0.3s;
-        }
-        .btn-scan:hover {
-            background: var(--accent);
-            color: black;
-            box-shadow: 0 0 15px var(--accent);
-        }
-
-        /* TERMINAL MODAL */
-        #terminal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .terminal-window {
-            width: 900px;
-            height: 600px;
-            background: #050505;
+        .hud-card {
+            background: var(--bg-panel);
             border: 1px solid var(--border);
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            display: grid;
-            grid-template-rows: 40px 1fr 60px;
-            border-radius: 8px;
-            overflow: hidden;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        .term-header {
-            background: #111;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #333;
-            font-family: 'JetBrains Mono';
-            font-size: 0.9rem;
-            color: #888;
-        }
-
-        .term-body {
-            background: rgba(0, 10, 5, 0.95);
-            padding: 20px;
-            overflow-y: auto;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.95rem;
-            color: #cfc;
-            line-height: 1.6;
-            border-left: 2px solid var(--accent);
-        }
-
-        .log-line { margin-bottom: 5px; opacity: 0; animation: fadeInLog 0.1s forwards; }
-        @keyframes fadeInLog { to { opacity: 1; } }
-
-        .log-time { color: #555; margin-right: 10px; }
-        .log-info { color: var(--accent); }
-        .log-success { color: var(--success); }
-        .log-fail { color: var(--danger); }
-        .log-warn { color: var(--warning); }
-
-        .term-footer {
-            background: #111;
+            border-left: 3px solid var(--accent);
             padding: 10px 20px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid #333;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hud-card::after {
+            content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+            background: linear-gradient(45deg, transparent 95%, rgba(255,255,255,0.05));
+            pointer-events: none;
         }
 
-        .btn-close {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 8px 25px;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 2px;
-        }
+        .hud-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .hud-value { font-family: 'JetBrains Mono'; font-size: 2rem; font-weight: 700; margin-top: 5px; }
+        
+        .border-blue { border-left-color: var(--accent); }
+        .border-green { border-left-color: var(--success); }
+        .border-red { border-left-color: var(--danger); }
+        .border-orange { border-left-color: var(--warning); }
+        
+        .text-blue { color: var(--accent); }
+        .text-green { color: var(--success); }
+        .text-red { color: var(--danger); }
+        .text-orange { color: var(--warning); }
 
-        /* MAP STYLES */
+        /* MAIN LAYOUT */
+        .main-container { display: grid; grid-template-columns: 260px 1fr; height: 100%; overflow: hidden; }
+
+        /* SIDEBAR */
+        aside { background: var(--bg-panel); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; }
+        .nav-item { padding: 15px 25px; cursor: pointer; color: var(--text-muted); transition: 0.3s; border-left: 3px solid transparent; font-size: 1.1rem; display: flex; align-items: center; gap: 15px; }
+        .nav-item:hover { background: rgba(255,255,255,0.02); color: white; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(0,243,255,0.1), transparent); border-left-color: var(--accent); color: var(--accent); }
+
+        /* CONTENT */
+        .content { position: relative; height: 100%; overflow: hidden; }
+        .view-panel { display: none; height: 100%; width: 100%; }
+        .view-panel.active { display: block; }
+        .table-wrapper { height: 100%; overflow-y: auto; padding: 20px; }
+        
+        table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+        th { text-align: left; padding: 15px; color: var(--text-muted); font-size: 0.8rem; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--bg-deep); z-index: 10; }
+        tr.data-row { background: var(--bg-panel); transition: 0.2s; }
+        tr.data-row:hover { background: #131b24; transform: translateX(5px); }
+        td { padding: 12px 15px; border-bottom: 1px solid var(--border); }
+
+        .status-badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
+        .st-up { background: rgba(0, 255, 157, 0.1); color: var(--success); }
+        .st-down { background: rgba(255, 0, 85, 0.1); color: var(--danger); animation: pulseRed 2s infinite; }
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); } }
+
+        .btn-scan { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 5px 15px; cursor: pointer; font-family: 'JetBrains Mono'; font-size: 0.75rem; }
+        .btn-scan:hover { background: var(--accent); color: black; }
+
+        /* TERMINAL OVERLAY */
+        #terminal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        .terminal-window { width: 900px; height: 600px; background: #050505; border: 1px solid var(--border); box-shadow: 0 0 50px rgba(0,0,0,0.8); display: grid; grid-template-rows: 40px 1fr 60px; border-radius: 8px; }
+        .term-header { background: #111; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; font-family: 'JetBrains Mono'; color: #888; }
+        .term-body { background: rgba(0, 10, 5, 0.95); padding: 20px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #cfc; line-height: 1.6; }
+        .term-footer { background: #111; padding: 10px 20px; display: flex; justify-content: flex-end; border-top: 1px solid #333; }
+        .log-time { color: #555; margin-right: 10px; }
+        .log-success { color: var(--success); } .log-fail { color: var(--danger); } .log-info { color: var(--accent); }
+
         .leaflet-layer { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
     </style>
 </head>
@@ -284,14 +138,35 @@
 
 <header>
     <div class="brand"><i class="fas fa-network-wired"></i> AMBERIT <span>NOC CORE</span></div>
-    <div class="system-status"><i class="fas fa-satellite-dish"></i> SYSTEM ONLINE</div>
+    <div style="font-family:'JetBrains Mono'; font-size:0.9rem; color:var(--text-muted);">
+        <i class="fas fa-server"></i> SERVER: <span style="color:var(--success)">ONLINE</span>
+    </div>
 </header>
+
+<div class="hud-container">
+    <div class="hud-card border-blue">
+        <div class="hud-label">Total Inventory</div>
+        <div class="hud-value text-blue" id="hud-total">0</div>
+    </div>
+    <div class="hud-card border-green">
+        <div class="hud-label">Links Online</div>
+        <div class="hud-value text-green" id="hud-up">0</div>
+    </div>
+    <div class="hud-card border-red">
+        <div class="hud-label">Critical / Down</div>
+        <div class="hud-value text-red" id="hud-down">0</div>
+    </div>
+    <div class="hud-card border-orange">
+        <div class="hud-label">Degraded Signal</div>
+        <div class="hud-value text-orange" id="hud-warn">0</div>
+    </div>
+</div>
 
 <div class="main-container">
     <aside>
-        <div class="nav-item active" onclick="switchView('list')"><i class="fas fa-list"></i> Inventory Grid</div>
+        <div class="nav-item active" onclick="switchView('list')"><i class="fas fa-list"></i> Network Grid</div>
         <div class="nav-item" onclick="switchView('map')"><i class="fas fa-globe-asia"></i> Geospatial Map</div>
-        <div class="nav-item" onclick="location.reload()"><i class="fas fa-sync"></i> Force Refresh</div>
+        <div class="nav-item" onclick="location.reload()"><i class="fas fa-sync"></i> System Refresh</div>
     </aside>
 
     <div class="content">
@@ -303,14 +178,13 @@
                             <th>Link ID</th>
                             <th>Link Name</th>
                             <th>POP Node</th>
-                            <th>Client IP</th>
-                            <th>Radio Model</th>
-                            <th>Live Status</th>
+                            <th>Target IP</th>
+                            <th>Status</th>
                             <th>Diagnostics</th>
                         </tr>
                     </thead>
                     <tbody id="inventory-body">
-                        <tr><td colspan="7" style="text-align:center; padding:50px;">INITIALIZING DATA STREAM...</td></tr>
+                        <tr><td colspan="6" style="text-align:center; padding:50px;">CONNECTING TO BACKEND...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -325,14 +199,12 @@
 <div id="terminal-overlay">
     <div class="terminal-window">
         <div class="term-header">
-            <div id="term-title">ROOT@AMBERIT-NOC:~/DIAGNOSTICS</div>
-            <div style="color:var(--accent)">SECURE CONNECTION ESTABLISHED</div>
+            <div id="term-title">DIAGNOSTIC TERMINAL</div>
+            <div style="color:var(--accent)">SECURE</div>
         </div>
-        <div class="term-body" id="term-log">
-            </div>
+        <div class="term-body" id="term-log"></div>
         <div class="term-footer">
-            <div id="term-status" style="color:white; font-family:'JetBrains Mono'">STATUS: RUNNING...</div>
-            <button class="btn-close" onclick="stopScan()">ABORT SEQUENCE</button>
+            <button class="btn-scan" style="background:var(--danger); color:white;" onclick="stopScan()">TERMINATE SESSION</button>
         </div>
     </div>
 </div>
@@ -341,20 +213,18 @@
 
 <script>
     // ***************************************************************
-    // ⚠️ UPDATE THIS WITH YOUR NEW NGROK URL EVERY TIME YOU RESTART
+    // ⚠️ PASTE YOUR NGROK URL HERE:
     const API_BASE = "https://alpha-nonstudious-traumatically.ngrok-free.dev"; 
     // ***************************************************************
 
     let inventory = [];
     let map = null;
-    let scanInterval = null; // Holds the continuous ping timer
+    let scanInterval = null;
     let isScanning = false;
 
-    // --- INITIALIZATION ---
     window.onload = function() {
         loadInventory();
-        // Auto-refresh inventory every 30 seconds
-        setInterval(loadInventory, 30000);
+        setInterval(loadInventory, 10000); // Fast refresh (10s)
     };
 
     async function loadInventory() {
@@ -363,10 +233,23 @@
                 headers: { "ngrok-skip-browser-warning": "69420" }
             });
             inventory = await res.json();
+            updateHUD();
             renderTable();
         } catch (e) {
-            console.error("API Error:", e);
+            console.error(e);
         }
+    }
+
+    function updateHUD() {
+        const total = inventory.length;
+        const up = inventory.filter(i => i.status === 'UP').length;
+        const down = inventory.filter(i => i.status === 'DOWN').length;
+        const deg = inventory.filter(i => i.status === 'DEGRADED').length;
+
+        document.getElementById('hud-total').innerText = total;
+        document.getElementById('hud-up').innerText = up;
+        document.getElementById('hud-down').innerText = down;
+        document.getElementById('hud-warn').innerText = deg;
     }
 
     function renderTable() {
@@ -384,40 +267,26 @@
                 <tr class="data-row">
                     <td style="font-family:'JetBrains Mono'; color:var(--accent)">#${link.id}</td>
                     <td style="font-weight:700">${link.name}</td>
-                    <td>${link.pop || 'N/A'}</td>
+                    <td>${link.pop || '-'}</td>
                     <td style="font-family:'JetBrains Mono'">${link.ip}</td>
-                    <td>${link.model || 'Unknown'}</td>
                     <td><div class="status-badge ${statusClass}"><i class="fas ${icon}"></i> ${link.status}</div></td>
-                    <td><button class="btn-scan" onclick="startContinuousScan(${link.id}, '${link.name}')">INITIATE TRACE</button></td>
+                    <td><button class="btn-scan" onclick="startContinuousScan(${link.id}, '${link.name}')">TRACE ROUTE</button></td>
                 </tr>
             `;
             tbody.innerHTML += row;
         });
     }
 
-    // --- CONTINUOUS PING LOGIC (THE "LONGER" PING) ---
     function startContinuousScan(id, name) {
-        // Open Modal
-        const overlay = document.getElementById('terminal-overlay');
-        const log = document.getElementById('term-log');
-        const title = document.getElementById('term-title');
+        document.getElementById('terminal-overlay').style.display = 'flex';
+        document.getElementById('term-log').innerHTML = '';
+        document.getElementById('term-title').innerText = `TARGET: ${name}`;
         
-        overlay.style.display = 'flex';
-        log.innerHTML = ''; // Clear previous logs
-        title.innerText = `TARGET: ${name.toUpperCase()} (ID:${id})`;
-        
-        writeLog('SYSTEM', 'INITIALIZING CONTINUOUS DIAGNOSTIC SEQUENCE...', 'info');
-        writeLog('SYSTEM', 'ESTABLISHING TUNNEL TO BACKEND...', 'info');
-
         isScanning = true;
-        
-        // 1. Immediate First Scan
-        runSingleScan(id);
+        writeLog('SYSTEM', 'INITIALIZING CONTINUOUS DIAGNOSTIC SEQUENCE...', 'log-info');
 
-        // 2. Loop every 2 seconds (Continuous Ping)
-        scanInterval = setInterval(() => {
-            if(isScanning) runSingleScan(id);
-        }, 2000);
+        runSingleScan(id);
+        scanInterval = setInterval(() => { if(isScanning) runSingleScan(id); }, 2000);
     }
 
     async function runSingleScan(id) {
@@ -427,49 +296,24 @@
                 headers: { "ngrok-skip-browser-warning": "69420" }
             });
             const data = await res.json();
-            
-            // Render the "Triple Hop" log nicely
             const time = new Date().toLocaleTimeString('en-US', {hour12:false});
             
-            // Separator
+            // Log Line
             const logDiv = document.getElementById('term-log');
-            logDiv.innerHTML += `<div style="border-top:1px dashed #333; margin: 10px 0;"></div>`;
-
-            // Hops
+            logDiv.innerHTML += `<div style="border-top:1px dashed #222; margin:5px 0"></div>`;
+            
             data.hops.forEach(hop => {
-                let statusColor = 'log-success';
-                let statusText = 'REPLY';
-                
-                if(hop.status !== 'UP') {
-                    statusColor = 'log-fail';
-                    statusText = 'TIMEOUT';
-                }
-
-                const msg = `[${hop.label.padEnd(12)}] ${hop.ip.padEnd(15)} -> ${statusText} (Latency: ${hop.latency}ms)`;
-                writeLog(time, msg, statusColor);
+                const color = hop.status === 'UP' ? 'log-success' : 'log-fail';
+                const msg = `[${hop.label}] ${hop.ip} -> ${hop.status} (${hop.latency}ms)`;
+                writeLog(time, msg, color);
             });
-
-            // Signal
-            if(data.rssi && data.rssi !== 0) {
-                const rssiColor = data.rssi < -75 ? 'log-warn' : 'log-info';
-                writeLog(time, `[RADIO_METRIC] Signal Strength: ${data.rssi} dBm`, rssiColor);
-            }
-
-            // Auto Scroll to bottom
+            
             logDiv.scrollTop = logDiv.scrollHeight;
-
-        } catch (e) {
-            writeLog('ERROR', 'CONNECTION LOST TO BACKEND AGENT', 'log-fail');
-            stopScan();
-        }
+        } catch(e) { stopScan(); }
     }
 
-    function writeLog(prefix, message, colorClass) {
-        const log = document.getElementById('term-log');
-        const line = document.createElement('div');
-        line.className = 'log-line';
-        line.innerHTML = `<span class="log-time">[${prefix}]</span> <span class="${colorClass}">${message}</span>`;
-        log.appendChild(line);
+    function writeLog(prefix, msg, color) {
+        document.getElementById('term-log').innerHTML += `<div class="log-line"><span class="log-time">[${prefix}]</span> <span class="${color}">${msg}</span></div>`;
     }
 
     function stopScan() {
@@ -478,48 +322,26 @@
         document.getElementById('terminal-overlay').style.display = 'none';
     }
 
-    // --- VIEW SWITCHING ---
-    function switchView(viewName) {
-        document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        
-        document.getElementById('view-'+viewName).classList.add('active');
-        // Update nav highlight
-        if(viewName === 'list') document.querySelectorAll('.nav-item')[0].classList.add('active');
-        if(viewName === 'map') {
-            document.querySelectorAll('.nav-item')[1].classList.add('active');
-            initMap();
-        }
+    function switchView(v) {
+        document.querySelectorAll('.view-panel').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+        document.getElementById('view-'+v).classList.add('active');
+        if(v==='map') initMap();
     }
 
-    // --- MAP ---
     function initMap() {
         if(map) return;
         setTimeout(() => {
             map = L.map('map').setView([23.8103, 90.4125], 11);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            
-            // Add Inventory Markers
             inventory.forEach(i => {
-                // Mock coords for now
                 const lat = 23.8 + (Math.random() * 0.2 - 0.1);
                 const lng = 90.4 + (Math.random() * 0.2 - 0.1);
-                
                 const color = i.status === 'UP' ? '#00ff9d' : '#ff0055';
-                
-                L.circleMarker([lat, lng], {
-                    radius: 6,
-                    fillColor: color,
-                    color: "#000",
-                    weight: 1,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map).bindPopup(`<b>${i.name}</b><br>IP: ${i.ip}`);
+                L.circleMarker([lat, lng], { radius: 6, color: color }).addTo(map).bindPopup(i.name);
             });
         }, 100);
     }
-
 </script>
-
 </body>
 </html>
