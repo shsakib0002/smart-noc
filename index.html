@@ -3,200 +3,523 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AmberIT NOC | Live Map & Terminal</title>
+    <title>AMBERIT NOC | MASTER CONTROL</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
     <style>
-        :root { --bg: #0f111a; --panel: #1a1d2d; --accent: #3b82f6; --text: #e2e8f0; --ok: #10b981; --bad: #ef4444; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin:0; height:100vh; overflow:hidden; }
-        
-        /* MAIN UI */
-        #app-ui { height:100%; display:flex; flex-direction:column; }
-        header { background: #23273a; padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center; }
-        
-        /* TABS */
-        .tabs { display:flex; gap:20px; }
-        .tab { cursor:pointer; opacity:0.7; padding-bottom:5px; }
-        .tab.active { opacity:1; border-bottom:2px solid var(--accent); }
+        :root {
+            --bg-deep: #050505;
+            --bg-panel: #0a0f14;
+            --border: #1f2933;
+            --accent: #00f3ff; /* Cyber Cyan */
+            --accent-dim: rgba(0, 243, 255, 0.1);
+            --success: #00ff9d;
+            --danger: #ff0055;
+            --warning: #ffb800;
+            --text-main: #e0e6ed;
+            --text-muted: #94a3b8;
+        }
 
-        /* VIEWS */
-        .view { display:none; flex:1; overflow:hidden; }
-        .view.active { display:block; }
+        * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--accent) var(--bg-deep); }
         
-        /* TABLE */
-        .scroll-area { height:100%; overflow-y:auto; padding:20px; }
-        table { width:100%; border-collapse:collapse; }
-        th, td { padding:12px; text-align:left; border-bottom:1px solid #333; }
-        tr:hover { background:rgba(255,255,255,0.05); }
-        .badge { padding:3px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold; }
-        .badge-UP { background:rgba(16,185,129,0.2); color:var(--ok); }
-        .badge-DOWN { background:rgba(239,68,68,0.2); color:var(--bad); }
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: grid;
+            grid-template-rows: 60px 1fr;
+            overflow: hidden;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
 
-        /* TERMINAL PANEL */
-        #term-panel { height:300px; background:#111; border-top:2px solid var(--accent); display:none; grid-template-columns: 300px 1fr; }
-        .term-log { padding:15px; font-family:monospace; color:#0f0; overflow-y:auto; border-right:1px solid #333; font-size:0.9rem; }
-        .term-viz { display:flex; align-items:center; justify-content:center; gap:20px; background:var(--panel); }
+        /* HEADER */
+        header {
+            background: rgba(10, 15, 20, 0.9);
+            border-bottom: 1px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+            z-index: 100;
+        }
+
+        .brand {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--accent);
+        }
+        .brand span { color: var(--accent); }
+
+        .system-status {
+            font-size: 0.9rem;
+            color: var(--success);
+            border: 1px solid var(--success);
+            padding: 5px 15px;
+            border-radius: 4px;
+            background: rgba(0, 255, 157, 0.05);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* MAIN LAYOUT */
+        .main-container {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        aside {
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: 0.3s;
+            border-left: 3px solid transparent;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.02); color: white; }
+        .nav-item.active {
+            background: linear-gradient(90deg, var(--accent-dim), transparent);
+            border-left-color: var(--accent);
+            color: var(--accent);
+            text-shadow: 0 0 8px var(--accent);
+        }
+
+        /* CONTENT AREA */
+        .content {
+            position: relative;
+            height: 100%;
+            overflow: hidden;
+        }
         
-        /* HOP VISUALS */
-        .hop { width:90px; height:90px; background:#222; border:2px solid #555; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; }
-        .hop.ok { border-color:var(--ok); box-shadow:0 0 10px rgba(16,185,129,0.2); }
-        .hop.bad { border-color:var(--bad); box-shadow:0 0 10px rgba(239,68,68,0.3); }
-        .line { width:50px; height:4px; background:#333; }
-        .line.active { background:var(--ok); }
+        .view-panel {
+            display: none;
+            height: 100%;
+            width: 100%;
+            animation: fadeIn 0.3s ease;
+        }
+        .view-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* DATA TABLE */
+        .table-wrapper {
+            height: 100%;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px; /* Gap between rows */
+        }
+        
+        th {
+            text-align: left;
+            padding: 15px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        tr.data-row {
+            background: var(--bg-panel);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        tr.data-row:hover {
+            transform: scale(1.005);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            background: #131b24;
+        }
+        
+        td {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        td:first-child { border-left: 1px solid var(--border); border-radius: 6px 0 0 6px; }
+        td:last-child { border-right: 1px solid var(--border); border-radius: 0 6px 6px 0; }
+
+        /* STATUS BADGES */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+        .st-up { background: rgba(0, 255, 157, 0.1); color: var(--success); border: 1px solid rgba(0, 255, 157, 0.3); box-shadow: 0 0 10px rgba(0,255,157,0.2); }
+        .st-down { background: rgba(255, 0, 85, 0.1); color: var(--danger); border: 1px solid rgba(255, 0, 85, 0.3); box-shadow: 0 0 10px rgba(255,0,85,0.2); }
+        .st-deg { background: rgba(255, 184, 0, 0.1); color: var(--warning); border: 1px solid rgba(255, 184, 0, 0.3); }
+
+        /* ACTION BUTTON */
+        .btn-scan {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 8px 20px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+        .btn-scan:hover {
+            background: var(--accent);
+            color: black;
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        /* TERMINAL MODAL */
+        #terminal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .terminal-window {
+            width: 900px;
+            height: 600px;
+            background: #050505;
+            border: 1px solid var(--border);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            display: grid;
+            grid-template-rows: 40px 1fr 60px;
+            border-radius: 8px;
+            overflow: hidden;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .term-header {
+            background: #111;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+            font-family: 'JetBrains Mono';
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .term-body {
+            background: rgba(0, 10, 5, 0.95);
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: #cfc;
+            line-height: 1.6;
+            border-left: 2px solid var(--accent);
+        }
+
+        .log-line { margin-bottom: 5px; opacity: 0; animation: fadeInLog 0.1s forwards; }
+        @keyframes fadeInLog { to { opacity: 1; } }
+
+        .log-time { color: #555; margin-right: 10px; }
+        .log-info { color: var(--accent); }
+        .log-success { color: var(--success); }
+        .log-fail { color: var(--danger); }
+        .log-warn { color: var(--warning); }
+
+        .term-footer {
+            background: #111;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #333;
+        }
+
+        .btn-close {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 25px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 2px;
+        }
+
+        /* MAP STYLES */
+        .leaflet-layer { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
     </style>
 </head>
 <body>
 
-    <div id="app-ui">
-        <header>
-            <div style="font-weight:bold; font-size:1.1rem;">AmberIT <span style="color:var(--accent)">NOC Core</span></div>
-            <div class="tabs">
-                <div class="tab active" onclick="setView('list')">List View</div>
-                <div class="tab" onclick="setView('map')">Live Map</div>
-            </div>
-            <div style="font-size:0.8rem; color:#aaa">System Online</div>
-        </header>
+<header>
+    <div class="brand"><i class="fas fa-network-wired"></i> AMBERIT <span>NOC CORE</span></div>
+    <div class="system-status"><i class="fas fa-satellite-dish"></i> SYSTEM ONLINE</div>
+</header>
 
-        <div id="view-list" class="view active">
-            <div class="scroll-area">
+<div class="main-container">
+    <aside>
+        <div class="nav-item active" onclick="switchView('list')"><i class="fas fa-list"></i> Inventory Grid</div>
+        <div class="nav-item" onclick="switchView('map')"><i class="fas fa-globe-asia"></i> Geospatial Map</div>
+        <div class="nav-item" onclick="location.reload()"><i class="fas fa-sync"></i> Force Refresh</div>
+    </aside>
+
+    <div class="content">
+        <div id="view-list" class="view-panel active">
+            <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>ID</th><th>Name</th><th>POP</th><th>IP</th><th>Status</th><th>Action</th></tr></thead>
-                    <tbody id="table-body">
-                         <tr><td colspan="6">Loading Inventory...</td></tr>
+                    <thead>
+                        <tr>
+                            <th>Link ID</th>
+                            <th>Link Name</th>
+                            <th>POP Node</th>
+                            <th>Client IP</th>
+                            <th>Radio Model</th>
+                            <th>Live Status</th>
+                            <th>Diagnostics</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-body">
+                        <tr><td colspan="7" style="text-align:center; padding:50px;">INITIALIZING DATA STREAM...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div id="view-map" class="view">
+        <div id="view-map" class="view-panel">
             <div id="map" style="width:100%; height:100%;"></div>
         </div>
+    </div>
+</div>
 
-        <div id="term-panel">
-            <div class="term-log" id="term-log">Waiting...</div>
-            <div class="term-viz" id="term-viz"></div>
+<div id="terminal-overlay">
+    <div class="terminal-window">
+        <div class="term-header">
+            <div id="term-title">ROOT@AMBERIT-NOC:~/DIAGNOSTICS</div>
+            <div style="color:var(--accent)">SECURE CONNECTION ESTABLISHED</div>
+        </div>
+        <div class="term-body" id="term-log">
+            </div>
+        <div class="term-footer">
+            <div id="term-status" style="color:white; font-family:'JetBrains Mono'">STATUS: RUNNING...</div>
+            <button class="btn-close" onclick="stopScan()">ABORT SEQUENCE</button>
         </div>
     </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
 <script>
-    // ******************************************************
-    // PASTE YOUR NGROK URL HERE (No trailing slash)
-    const API_BASE = " https://alpha-nonstudious-traumatically.ngrok-free.dev"; 
-    // ******************************************************
+    // ***************************************************************
+    // ⚠️ UPDATE THIS WITH YOUR NEW NGROK URL EVERY TIME YOU RESTART
+    const API_BASE = "https://alpha-nonstudious-traumatically.ngrok-free.dev"; 
+    // ***************************************************************
 
-    let map = null;
     let inventory = [];
+    let map = null;
+    let scanInterval = null; // Holds the continuous ping timer
+    let isScanning = false;
 
-    // --- MAIN LOGIC ---
+    // --- INITIALIZATION ---
+    window.onload = function() {
+        loadInventory();
+        // Auto-refresh inventory every 30 seconds
+        setInterval(loadInventory, 30000);
+    };
+
     async function loadInventory() {
         try {
-            // UPDATED FETCH WITH HEADER
             const res = await fetch(`${API_BASE}/api/inventory`, {
                 headers: { "ngrok-skip-browser-warning": "69420" }
             });
-            
             inventory = await res.json();
             renderTable();
         } catch (e) {
-            console.error(e); // This will now show the real error in console if it fails again
-            document.getElementById('table-body').innerHTML = `<tr><td colspan="6" style="color:red">Connection Error. Check Ngrok/Backend.</td></tr>`;
+            console.error("API Error:", e);
         }
     }
 
     function renderTable() {
-        const tb = document.getElementById('table-body');
-        tb.innerHTML = '';
-        inventory.forEach(item => {
-            tb.innerHTML += `
-                <tr>
-                    <td>${item.id}</td>
-                    <td><b>${item.name}</b></td>
-                    <td>${item.pop}</td>
-                    <td>${item.ip}</td>
-                    <td><span class="badge badge-${item.status}">${item.status}</span></td>
-                    <td><button onclick="runScan(${item.id}, '${item.name}')" style="background:var(--accent); color:white; border:none; padding:5px 10px; cursor:pointer;">Triple Scan</button></td>
+        const tbody = document.getElementById('inventory-body');
+        tbody.innerHTML = '';
+        
+        inventory.forEach(link => {
+            let statusClass = 'st-up';
+            let icon = 'fa-check-circle';
+            
+            if(link.status === 'DOWN') { statusClass = 'st-down'; icon = 'fa-times-circle'; }
+            if(link.status === 'DEGRADED') { statusClass = 'st-deg'; icon = 'fa-exclamation-triangle'; }
+
+            const row = `
+                <tr class="data-row">
+                    <td style="font-family:'JetBrains Mono'; color:var(--accent)">#${link.id}</td>
+                    <td style="font-weight:700">${link.name}</td>
+                    <td>${link.pop || 'N/A'}</td>
+                    <td style="font-family:'JetBrains Mono'">${link.ip}</td>
+                    <td>${link.model || 'Unknown'}</td>
+                    <td><div class="status-badge ${statusClass}"><i class="fas ${icon}"></i> ${link.status}</div></td>
+                    <td><button class="btn-scan" onclick="startContinuousScan(${link.id}, '${link.name}')">INITIATE TRACE</button></td>
                 </tr>
             `;
+            tbody.innerHTML += row;
         });
     }
 
-    // --- TERMINAL VISUALIZER ---
-    async function runScan(id, name) {
-        const panel = document.getElementById('term-panel');
+    // --- CONTINUOUS PING LOGIC (THE "LONGER" PING) ---
+    function startContinuousScan(id, name) {
+        // Open Modal
+        const overlay = document.getElementById('terminal-overlay');
         const log = document.getElementById('term-log');
-        const viz = document.getElementById('term-viz');
+        const title = document.getElementById('term-title');
         
-        panel.style.display = 'grid';
-        log.innerHTML = `> INITIATING TRIPLE-HOP DIAGNOSTIC FOR: ${name}...\n`;
-        viz.innerHTML = '<div style="color:#aaa">Pinging Nodes...</div>';
+        overlay.style.display = 'flex';
+        log.innerHTML = ''; // Clear previous logs
+        title.innerText = `TARGET: ${name.toUpperCase()} (ID:${id})`;
+        
+        writeLog('SYSTEM', 'INITIALIZING CONTINUOUS DIAGNOSTIC SEQUENCE...', 'info');
+        writeLog('SYSTEM', 'ESTABLISHING TUNNEL TO BACKEND...', 'info');
 
+        isScanning = true;
+        
+        // 1. Immediate First Scan
+        runSingleScan(id);
+
+        // 2. Loop every 2 seconds (Continuous Ping)
+        scanInterval = setInterval(() => {
+            if(isScanning) runSingleScan(id);
+        }, 2000);
+    }
+
+    async function runSingleScan(id) {
         try {
             const res = await fetch(`${API_BASE}/api/scan/${id}`, { 
-            method:'POST',
-            headers: { "ngrok-skip-browser-warning": "69420" }
+                method: 'POST',
+                headers: { "ngrok-skip-browser-warning": "69420" }
             });
             const data = await res.json();
+            
+            // Render the "Triple Hop" log nicely
+            const time = new Date().toLocaleTimeString('en-US', {hour12:false});
+            
+            // Separator
+            const logDiv = document.getElementById('term-log');
+            logDiv.innerHTML += `<div style="border-top:1px dashed #333; margin: 10px 0;"></div>`;
 
-            // LOG output
-            log.innerHTML += `> --------------------------------\n`;
+            // Hops
             data.hops.forEach(hop => {
-                const ms = hop.status==='UP' ? hop.latency+'ms' : 'TIMEOUT';
-                log.innerHTML += `> [${hop.label.toUpperCase()}] IP:${hop.ip} -> ${hop.status} (${ms})\n`;
-            });
-            log.innerHTML += `> --------------------------------\n`;
-            log.innerHTML += `> FINAL STATUS: ${data.final_status}\n`;
-            log.innerHTML += `> SIGNAL (RSSI): ${data.rssi} dBm\n`;
-
-            // VISUAL output
-            viz.innerHTML = '';
-            data.hops.forEach((hop, idx) => {
-                const color = hop.status === 'UP' ? 'ok' : (hop.status==='SKIP' ? '' : 'bad');
-                viz.innerHTML += `
-                    <div class="hop ${color}">
-                        <div style="font-size:0.7rem; color:#aaa">${hop.label}</div>
-                        <div style="font-weight:bold">${hop.ip}</div>
-                        <div style="font-size:0.8rem">${hop.status}</div>
-                    </div>
-                `;
-                if(idx < 2) {
-                    viz.innerHTML += `<div class="line ${hop.status==='UP'?'active':''}"></div>`;
+                let statusColor = 'log-success';
+                let statusText = 'REPLY';
+                
+                if(hop.status !== 'UP') {
+                    statusColor = 'log-fail';
+                    statusText = 'TIMEOUT';
                 }
+
+                const msg = `[${hop.label.padEnd(12)}] ${hop.ip.padEnd(15)} -> ${statusText} (Latency: ${hop.latency}ms)`;
+                writeLog(time, msg, statusColor);
             });
 
-        } catch(e) {
-            log.innerHTML += `> FATAL ERROR: Backend Connection Lost.`;
+            // Signal
+            if(data.rssi && data.rssi !== 0) {
+                const rssiColor = data.rssi < -75 ? 'log-warn' : 'log-info';
+                writeLog(time, `[RADIO_METRIC] Signal Strength: ${data.rssi} dBm`, rssiColor);
+            }
+
+            // Auto Scroll to bottom
+            logDiv.scrollTop = logDiv.scrollHeight;
+
+        } catch (e) {
+            writeLog('ERROR', 'CONNECTION LOST TO BACKEND AGENT', 'log-fail');
+            stopScan();
         }
     }
 
-    // --- MAP VIEW ---
-    function setView(v) {
-        document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-        document.getElementById('view-'+v).classList.add('active');
-        document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
-        event.target.classList.add('active');
+    function writeLog(prefix, message, colorClass) {
+        const log = document.getElementById('term-log');
+        const line = document.createElement('div');
+        line.className = 'log-line';
+        line.innerHTML = `<span class="log-time">[${prefix}]</span> <span class="${colorClass}">${message}</span>`;
+        log.appendChild(line);
+    }
 
-        if(v === 'map' && !map) {
-            map = L.map('map').setView([23.8103, 90.4125], 10);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OSM', className: 'map-tiles'
-            }).addTo(map);
+    function stopScan() {
+        isScanning = false;
+        clearInterval(scanInterval);
+        document.getElementById('terminal-overlay').style.display = 'none';
+    }
+
+    // --- VIEW SWITCHING ---
+    function switchView(viewName) {
+        document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById('view-'+viewName).classList.add('active');
+        // Update nav highlight
+        if(viewName === 'list') document.querySelectorAll('.nav-item')[0].classList.add('active');
+        if(viewName === 'map') {
+            document.querySelectorAll('.nav-item')[1].classList.add('active');
+            initMap();
+        }
+    }
+
+    // --- MAP ---
+    function initMap() {
+        if(map) return;
+        setTimeout(() => {
+            map = L.map('map').setView([23.8103, 90.4125], 11);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             
-            // Dark Mode Filter
-            document.querySelector('.leaflet-layer').style.filter = "invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)";
-
-            // Add Markers
+            // Add Inventory Markers
             inventory.forEach(i => {
+                // Mock coords for now
                 const lat = 23.8 + (Math.random() * 0.2 - 0.1);
                 const lng = 90.4 + (Math.random() * 0.2 - 0.1);
-                L.marker([lat, lng])
-                 .addTo(map)
-                 .bindPopup(`<b>${i.name}</b><br>Status: ${i.status}<br>IP: ${i.ip}`);
+                
+                const color = i.status === 'UP' ? '#00ff9d' : '#ff0055';
+                
+                L.circleMarker([lat, lng], {
+                    radius: 6,
+                    fillColor: color,
+                    color: "#000",
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map).bindPopup(`<b>${i.name}</b><br>IP: ${i.ip}`);
             });
-        }
+        }, 100);
     }
 
-    // Init
-    loadInventory();
 </script>
+
 </body>
 </html>
