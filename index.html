@@ -3,229 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AmberIT NOC | Pro</title>
+    <title>AmberIT NOC | Live Map & Terminal</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
-        :root { --bg-dark: #0f111a; --bg-panel: #1a1d2d; --accent: #3b82f6; --text: #e2e8f0; --success: #10b981; --crit: #ef4444; }
-        body { background: var(--bg-dark); color: var(--text); font-family: 'Segoe UI', sans-serif; margin:0; height:100vh; display:flex; flex-direction:column; }
+        :root { --bg: #0f111a; --panel: #1a1d2d; --accent: #3b82f6; --text: #e2e8f0; --ok: #10b981; --bad: #ef4444; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin:0; height:100vh; overflow:hidden; }
         
-        /* Login Overlay */
-        #login-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-dark); z-index:9999; display:flex; justify-content:center; align-items:center; }
-        .login-box { background:var(--bg-panel); padding:40px; border-radius:8px; border:1px solid #333; text-align:center; width:300px; }
-        input { width:90%; padding:10px; margin:10px 0; background:#000; border:1px solid #444; color:white; border-radius:4px; }
+        /* LOGIN OVERLAY */
+        #login-screen { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; display:flex; justify-content:center; align-items:center; }
+        .login-box { background:var(--panel); padding:40px; border-radius:8px; width:300px; text-align:center; border:1px solid #333; }
+        input { width:90%; padding:10px; margin:10px 0; background:#000; border:1px solid #444; color:white; }
+        button { background:var(--accent); color:white; border:none; padding:10px 20px; cursor:pointer; width:100%; margin-top:10px; }
+
+        /* MAIN UI */
+        #app-ui { display:none; height:100%; display:flex; flex-direction:column; }
+        header { background: #23273a; padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; }
         
-        /* Layout */
-        header { background: #23273a; padding:15px 20px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center; }
-        .nav-tabs { display:flex; gap:20px; margin-left:40px; }
-        .tab { cursor:pointer; padding:5px 10px; color:#aaa; }
-        .tab.active { color:white; border-bottom:2px solid var(--accent); }
+        /* TABS */
+        .tabs { display:flex; gap:20px; }
+        .tab { cursor:pointer; opacity:0.7; padding-bottom:5px; }
+        .tab.active { opacity:1; border-bottom:2px solid var(--accent); }
+
+        /* VIEWS */
+        .view { display:none; flex:1; overflow:hidden; }
+        .view.active { display:block; }
         
-        /* Views */
-        #view-list, #view-map { flex:1; overflow:hidden; display:none; }
-        #view-list.active, #view-map.active { display:block; }
-        
-        /* Table */
-        .table-container { height:100%; overflow-y:auto; padding:20px; }
+        /* TABLE */
+        .scroll-area { height:100%; overflow-y:auto; padding:20px; }
         table { width:100%; border-collapse:collapse; }
         th, td { padding:12px; text-align:left; border-bottom:1px solid #333; }
         tr:hover { background:rgba(255,255,255,0.05); }
+        .badge { padding:3px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold; }
+        .badge-UP { background:rgba(16,185,129,0.2); color:var(--ok); }
+        .badge-DOWN { background:rgba(239,68,68,0.2); color:var(--bad); }
+
+        /* TERMINAL PANEL */
+        #term-panel { height:300px; background:#111; border-top:2px solid var(--accent); display:none; grid-template-columns: 300px 1fr; }
+        .term-log { padding:15px; font-family:monospace; color:#0f0; overflow-y:auto; border-right:1px solid #333; font-size:0.9rem; }
+        .term-viz { display:flex; align-items:center; justify-content:center; gap:20px; background:var(--panel); }
         
-        /* Terminal */
-        #terminal-panel { position:fixed; bottom:0; width:100%; height:350px; background:#111; border-top:2px solid var(--accent); display:none; grid-template-columns: 300px 1fr; }
-        .term-log { background:black; color:#0f0; font-family:monospace; padding:15px; overflow-y:auto; font-size:0.9rem; border-right:1px solid #333; }
-        .term-visual { padding:20px; background:var(--bg-panel); display:flex; flex-direction:column; align-items:center; justify-content:center; }
-        
-        /* Hop Visualizer */
-        .hop-container { display:flex; align-items:center; gap:20px; margin-top:20px; }
-        .hop-node { width:80px; height:80px; border-radius:8px; background:#333; display:flex; flex-direction:column; align-items:center; justify-content:center; border:2px solid #555; position:relative; }
-        .hop-line { width:50px; height:4px; background:#333; }
-        .node-label { font-size:0.8rem; color:#aaa; margin-bottom:5px; }
-        .node-ip { font-size:0.75rem; color:white; }
-        .status-dot { width:12px; height:12px; border-radius:50%; margin-top:5px; background:#555; }
-        
-        .success { border-color:var(--success); } .success .status-dot { background:var(--success); } .success .hop-line { background:var(--success); }
-        .fail { border-color:var(--crit); } .fail .status-dot { background:var(--crit); }
-        
-        .badge { padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold; }
-        .badge-UP { background:rgba(16,185,129,0.2); color:var(--success); }
-        .badge-DOWN { background:rgba(239,68,68,0.2); color:var(--crit); }
+        /* HOP VISUALS */
+        .hop { width:90px; height:90px; background:#222; border:2px solid #555; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; }
+        .hop.ok { border-color:var(--ok); box-shadow:0 0 10px rgba(16,185,129,0.2); }
+        .hop.bad { border-color:var(--bad); box-shadow:0 0 10px rgba(239,68,68,0.3); }
+        .line { width:50px; height:4px; background:#333; }
+        .line.active { background:var(--ok); }
     </style>
 </head>
 <body>
 
-{% if login_mode %}
-<div id="login-overlay">
-    <form class="login-box" method="POST" action="/login">
-        <h2 style="color:var(--accent)">NOC Secure Login</h2>
-        {% if error %}<div style="color:red; margin-bottom:10px">{{error}}</div>{% endif %}
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit" style="background:var(--accent); color:white; border:none; padding:10px 20px; width:100%; cursor:pointer; margin-top:10px;">ENTER</button>
-    </form>
-</div>
-{% else %}
-
-<header>
-    <div style="display:flex; align-items:center;">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
-        <span style="margin-left:10px; font-weight:bold;">AmberIT NOC</span>
-        <div class="nav-tabs">
-            <div class="tab active" onclick="switchView('list')">List View</div>
-            <div class="tab" onclick="switchView('map')">Live Map</div>
+    <div id="login-screen">
+        <div class="login-box">
+            <h2 style="margin-top:0; color:var(--accent)">NOC Access</h2>
+            <input type="text" id="user" placeholder="Username">
+            <input type="password" id="pass" placeholder="Password">
+            <button onclick="doLogin()">Authenticate</button>
+            <div id="login-msg" style="color:red; margin-top:10px; font-size:0.9rem;"></div>
         </div>
     </div>
-    <a href="/logout" style="color:#aaa; text-decoration:none; font-size:0.9rem;">Logout</a>
-</header>
 
-<div id="view-list" class="active table-container">
-    <div style="max-width:1200px; margin:0 auto;">
-        <h2 style="border-bottom:1px solid #333; padding-bottom:10px;">Network Inventory</h2>
-        <table>
-            <thead><tr><th>ID</th><th>Name</th><th>POP</th><th>Target IP</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody id="inventory-body"><tr><td colspan="6">Loading...</td></tr></tbody>
-        </table>
-    </div>
-</div>
-
-<div id="view-map" style="height:100%;">
-    <div id="map" style="width:100%; height:100%;"></div>
-</div>
-
-<div id="terminal-panel">
-    <div class="term-log" id="term-log">
-        > System Ready...
-    </div>
-    <div class="term-visual">
-        <h3 id="term-title">Diagnostic: Idle</h3>
-        <div class="hop-container" id="hop-viz">
+    <div id="app-ui" style="display:none;">
+        <header>
+            <div style="font-weight:bold; font-size:1.1rem;">AmberIT <span style="color:var(--accent)">NOC Core</span></div>
+            <div class="tabs">
+                <div class="tab active" onclick="setView('list')">List View</div>
+                <div class="tab" onclick="setView('map')">Live Map</div>
             </div>
-        <div id="snmp-stats" style="margin-top:20px; font-family:monospace; color:#aaa;"></div>
-        <button onclick="closeTerm()" style="margin-top:20px; background:none; border:1px solid #555; color:#aaa; padding:5px 15px; cursor:pointer;">Close Terminal</button>
+            <button onclick="logout()" style="width:auto; padding:5px 15px; background:#333; margin:0;">Logout</button>
+        </header>
+
+        <div id="view-list" class="view active">
+            <div class="scroll-area">
+                <table>
+                    <thead><tr><th>ID</th><th>Name</th><th>POP</th><th>IP</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-map" class="view">
+            <div id="map" style="width:100%; height:100%;"></div>
+        </div>
+
+        <div id="term-panel">
+            <div class="term-log" id="term-log">Waiting...</div>
+            <div class="term-viz" id="term-viz"></div>
+        </div>
     </div>
-</div>
 
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script>
-    // --- GLOBAL STATE ---
-    let map = null;
+    // ******************************************************
+    // PASTE YOUR NGROK URL HERE (No trailing slash)
+    const API_BASE = "https://alpha-nonstudious-traumatically.ngrok-free.dev"; 
+    // ******************************************************
 
-    // --- VIEW SWITCHER ---
-    function switchView(view) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab')[view==='list'?0:1].classList.add('active');
-        document.getElementById('view-list').classList.remove('active');
-        document.getElementById('view-map').classList.remove('active');
-        document.getElementById('view-'+view).classList.add('active');
+    let map = null;
+    let inventory = [];
+
+    // --- AUTHENTICATION ---
+    async function doLogin() {
+        const u = document.getElementById('user').value;
+        const p = document.getElementById('pass').value;
         
-        if(view === 'map' && !map) initMap();
+        try {
+            const res = await fetch(`${API_BASE}/login`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({username:u, password:p})
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-ui').style.display = 'flex';
+                loadInventory();
+            } else {
+                document.getElementById('login-msg').innerText = "Access Denied";
+            }
+        } catch(e) {
+            document.getElementById('login-msg').innerText = "Connection Error: Check Ngrok";
+        }
     }
 
-    // --- DATA LOADING ---
-    async function loadData() {
-        const res = await fetch('/api/inventory');
-        const data = await res.json();
-        
-        // Render List
-        const tbody = document.getElementById('inventory-body');
-        tbody.innerHTML = '';
-        data.forEach(link => {
-            tbody.innerHTML += `
+    function logout() { location.reload(); }
+
+    // --- MAIN LOGIC ---
+    async function loadInventory() {
+        const res = await fetch(`${API_BASE}/api/inventory`);
+        inventory = await res.json();
+        renderTable();
+    }
+
+    function renderTable() {
+        const tb = document.getElementById('table-body');
+        tb.innerHTML = '';
+        inventory.forEach(item => {
+            tb.innerHTML += `
                 <tr>
-                    <td>${link.id}</td>
-                    <td><b>${link.name}</b></td>
-                    <td>${link.pop}</td>
-                    <td>${link.client_ip}</td>
-                    <td><span class="badge badge-${link.status}">${link.status}</span></td>
-                    <td><button onclick="runDiag(${link.id}, '${link.name}')" style="background:var(--accent); border:none; color:white; padding:5px 10px; cursor:pointer; border-radius:4px;">Scan</button></td>
+                    <td>${item.id}</td>
+                    <td><b>${item.name}</b></td>
+                    <td>${item.pop}</td>
+                    <td>${item.ip}</td>
+                    <td><span class="badge badge-${item.status}">${item.status}</span></td>
+                    <td><button onclick="runScan(${item.id}, '${item.name}')" style="width:auto; padding:5px 10px; font-size:0.8rem;">Triple Scan</button></td>
                 </tr>
             `;
         });
-
-        // Add to Map (Random locations around Dhaka for demo, as DB lacks coords)
-        if(map) {
-            data.forEach(link => {
-                // Mocking coordinates near Dhaka for visualization
-                // In real version, you'd pull link.lat/lng
-                const lat = 23.8 + (Math.random() * 0.1 - 0.05);
-                const lng = 90.4 + (Math.random() * 0.1 - 0.05);
-                L.marker([lat, lng])
-                 .addTo(map)
-                 .bindPopup(`<b>${link.name}</b><br>Status: ${link.status}`);
-            });
-        }
     }
 
-    // --- MAP INIT ---
-    function initMap() {
-        map = L.map('map').setView([23.8103, 90.4125], 12); // Dhaka Center
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            className: 'map-tiles'
-        }).addTo(map);
-        // Dark mode filter for map
-        document.querySelector('.leaflet-layer').style.filter = "invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)";
-        loadData(); // Reload markers
-    }
-
-    // --- TERMINAL & DIAGNOSTICS ---
-    async function runDiag(id, name) {
-        const panel = document.getElementById('terminal-panel');
+    // --- TERMINAL VISUALIZER ---
+    async function runScan(id, name) {
+        const panel = document.getElementById('term-panel');
         const log = document.getElementById('term-log');
-        const viz = document.getElementById('hop-viz');
+        const viz = document.getElementById('term-viz');
         
         panel.style.display = 'grid';
-        document.getElementById('term-title').innerText = `Scanning: ${name}`;
-        
-        // Reset Visuals
-        log.innerHTML = `> Initializing Triple-Hop Scan...<br>`;
+        log.innerHTML = `> INITIATING TRIPLE-HOP DIAGNOSTIC FOR: ${name}...\n`;
         viz.innerHTML = '<div style="color:#aaa">Pinging Nodes...</div>';
-        
+
         try {
-            const res = await fetch(`/api/scan/${id}`, { method: 'POST' });
+            const res = await fetch(`${API_BASE}/api/scan/${id}`, { method:'POST' });
             const data = await res.json();
-            
-            // Build Visualization
+
+            // LOG output
+            log.innerHTML += `> --------------------------------\n`;
+            data.hops.forEach(hop => {
+                const ms = hop.status==='UP' ? hop.latency+'ms' : 'TIMEOUT';
+                log.innerHTML += `> [${hop.label.toUpperCase()}] IP:${hop.ip} -> ${hop.status} (${ms})\n`;
+            });
+            log.innerHTML += `> --------------------------------\n`;
+            log.innerHTML += `> FINAL STATUS: ${data.final_status}\n`;
+            log.innerHTML += `> SIGNAL (RSSI): ${data.rssi} dBm\n`;
+
+            // VISUAL output
             viz.innerHTML = '';
-            
-            data.hops.forEach((hop, index) => {
-                const isUp = hop.loss === 0;
-                const colorClass = isUp ? 'success' : 'fail';
-                
-                log.innerHTML += `> ${hop.label} (${hop.ip}): ${isUp ? 'REPLY time='+hop.latency+'ms' : 'TIMEOUT'}<br>`;
-                
-                // Add Node UI
+            data.hops.forEach((hop, idx) => {
+                const color = hop.status === 'UP' ? 'ok' : (hop.status==='SKIP' ? '' : 'bad');
                 viz.innerHTML += `
-                    <div class="hop-node ${colorClass}">
-                        <div class="node-label">${hop.label}</div>
-                        <div class="node-ip">${hop.ip}</div>
-                        <div class="status-dot"></div>
+                    <div class="hop ${color}">
+                        <div style="font-size:0.7rem; color:#aaa">${hop.label}</div>
+                        <div style="font-weight:bold">${hop.ip}</div>
+                        <div style="font-size:0.8rem">${hop.status}</div>
                     </div>
                 `;
-                
-                // Add Connection Line (except last)
-                if(index < data.hops.length - 1) {
-                    viz.innerHTML += `<div class="hop-line" style="background:${isUp ? 'var(--success)' : '#333'}"></div>`;
+                if(idx < 2) {
+                    viz.innerHTML += `<div class="line ${hop.status==='UP'?'active':''}"></div>`;
                 }
             });
-            
-            log.innerHTML += `> SNMP RSSI Check: ${data.snmp.rssi || 'N/A'} dBm<br>`;
-            log.innerHTML += `> <b>FINAL STATUS: ${data.status}</b><br>`;
-            log.scrollTop = log.scrollHeight;
-            
-            document.getElementById('snmp-stats').innerHTML = `Signal Strength: <span style="color:${data.snmp.rssi < -75 ? 'orange':'#10b981'}">${data.snmp.rssi} dBm</span>`;
 
-        } catch (e) {
-            log.innerHTML += `> ERROR: Connection Failed.`;
+        } catch(e) {
+            log.innerHTML += `> FATAL ERROR: Backend Connection Lost.`;
         }
     }
 
-    function closeTerm() {
-        document.getElementById('terminal-panel').style.display = 'none';
-    }
+    // --- MAP VIEW ---
+    function setView(v) {
+        document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+        document.getElementById('view-'+v).classList.add('active');
+        document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+        event.target.classList.add('active');
 
-    // Start
-    loadData();
+        if(v === 'map' && !map) {
+            map = L.map('map').setView([23.8103, 90.4125], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OSM', className: 'map-tiles'
+            }).addTo(map);
+            
+            // Dark Mode Filter
+            document.querySelector('.leaflet-layer').style.filter = "invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)";
+
+            // Add Markers (Random jitter for demo since DB lacks Lat/Lng)
+            inventory.forEach(i => {
+                const lat = 23.8 + (Math.random() * 0.2 - 0.1);
+                const lng = 90.4 + (Math.random() * 0.2 - 0.1);
+                L.marker([lat, lng])
+                 .addTo(map)
+                 .bindPopup(`<b>${i.name}</b><br>Status: ${i.status}<br>IP: ${i.ip}`);
+            });
+        }
+    }
 </script>
-{% endif %}
 </body>
 </html>
