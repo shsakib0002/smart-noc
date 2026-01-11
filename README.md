@@ -129,4 +129,3 @@ Developed for AmberIT Network Operations.
 2.  Create the `README.md` file and paste the markdown code above.
 3.  Upload both to your GitHub repository.
 
-Now your project looks professional and anyone (including your team) can understand how t
