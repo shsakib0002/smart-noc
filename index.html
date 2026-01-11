@@ -9,15 +9,9 @@
         :root { --bg: #0f111a; --panel: #1a1d2d; --accent: #3b82f6; --text: #e2e8f0; --ok: #10b981; --bad: #ef4444; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin:0; height:100vh; overflow:hidden; }
         
-        /* LOGIN OVERLAY */
-        #login-screen { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; display:flex; justify-content:center; align-items:center; }
-        .login-box { background:var(--panel); padding:40px; border-radius:8px; width:300px; text-align:center; border:1px solid #333; }
-        input { width:90%; padding:10px; margin:10px 0; background:#000; border:1px solid #444; color:white; }
-        button { background:var(--accent); color:white; border:none; padding:10px 20px; cursor:pointer; width:100%; margin-top:10px; }
-
         /* MAIN UI */
-        #app-ui { display:none; height:100%; display:flex; flex-direction:column; }
-        header { background: #23273a; padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; }
+        #app-ui { height:100%; display:flex; flex-direction:column; }
+        header { background: #23273a; padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center; }
         
         /* TABS */
         .tabs { display:flex; gap:20px; }
@@ -52,31 +46,23 @@
 </head>
 <body>
 
-    <div id="login-screen">
-        <div class="login-box">
-            <h2 style="margin-top:0; color:var(--accent)">NOC Access</h2>
-            <input type="text" id="user" placeholder="Username">
-            <input type="password" id="pass" placeholder="Password">
-            <button onclick="doLogin()">Authenticate</button>
-            <div id="login-msg" style="color:red; margin-top:10px; font-size:0.9rem;"></div>
-        </div>
-    </div>
-
-    <div id="app-ui" style="display:none;">
+    <div id="app-ui">
         <header>
             <div style="font-weight:bold; font-size:1.1rem;">AmberIT <span style="color:var(--accent)">NOC Core</span></div>
             <div class="tabs">
                 <div class="tab active" onclick="setView('list')">List View</div>
                 <div class="tab" onclick="setView('map')">Live Map</div>
             </div>
-            <button onclick="logout()" style="width:auto; padding:5px 15px; background:#333; margin:0;">Logout</button>
+            <div style="font-size:0.8rem; color:#aaa">System Online</div>
         </header>
 
         <div id="view-list" class="view active">
             <div class="scroll-area">
                 <table>
                     <thead><tr><th>ID</th><th>Name</th><th>POP</th><th>IP</th><th>Status</th><th>Action</th></tr></thead>
-                    <tbody id="table-body"></tbody>
+                    <tbody id="table-body">
+                         <tr><td colspan="6">Loading Inventory...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -101,37 +87,15 @@
     let map = null;
     let inventory = [];
 
-    // --- AUTHENTICATION ---
-    async function doLogin() {
-        const u = document.getElementById('user').value;
-        const p = document.getElementById('pass').value;
-        
-        try {
-            const res = await fetch(`${API_BASE}/login`, {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({username:u, password:p})
-            });
-            const data = await res.json();
-            
-            if(data.success) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-ui').style.display = 'flex';
-                loadInventory();
-            } else {
-                document.getElementById('login-msg').innerText = "Access Denied";
-            }
-        } catch(e) {
-            document.getElementById('login-msg').innerText = "Connection Error: Check Ngrok";
-        }
-    }
-
-    function logout() { location.reload(); }
-
     // --- MAIN LOGIC ---
     async function loadInventory() {
-        const res = await fetch(`${API_BASE}/api/inventory`);
-        inventory = await res.json();
-        renderTable();
+        try {
+            const res = await fetch(`${API_BASE}/api/inventory`);
+            inventory = await res.json();
+            renderTable();
+        } catch (e) {
+            document.getElementById('table-body').innerHTML = `<tr><td colspan="6" style="color:red">Connection Error. Check Ngrok/Backend.</td></tr>`;
+        }
     }
 
     function renderTable() {
@@ -145,7 +109,7 @@
                     <td>${item.pop}</td>
                     <td>${item.ip}</td>
                     <td><span class="badge badge-${item.status}">${item.status}</span></td>
-                    <td><button onclick="runScan(${item.id}, '${item.name}')" style="width:auto; padding:5px 10px; font-size:0.8rem;">Triple Scan</button></td>
+                    <td><button onclick="runScan(${item.id}, '${item.name}')" style="background:var(--accent); color:white; border:none; padding:5px 10px; cursor:pointer;">Triple Scan</button></td>
                 </tr>
             `;
         });
@@ -212,7 +176,7 @@
             // Dark Mode Filter
             document.querySelector('.leaflet-layer').style.filter = "invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)";
 
-            // Add Markers (Random jitter for demo since DB lacks Lat/Lng)
+            // Add Markers
             inventory.forEach(i => {
                 const lat = 23.8 + (Math.random() * 0.2 - 0.1);
                 const lng = 90.4 + (Math.random() * 0.2 - 0.1);
@@ -222,6 +186,9 @@
             });
         }
     }
+
+    // Init
+    loadInventory();
 </script>
 </body>
 </html>
