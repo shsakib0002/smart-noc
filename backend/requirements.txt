@@ -1,7 +1,0 @@
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.5.0
-pythonping==1.1.4
-pysnmp==4.4.12
-aiofiles==23.2.1
-python-multipart==0.0.6
