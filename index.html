@@ -90,10 +90,15 @@
     // --- MAIN LOGIC ---
     async function loadInventory() {
         try {
-            const res = await fetch(`${API_BASE}/api/inventory`);
+            // UPDATED FETCH WITH HEADER
+            const res = await fetch(`${API_BASE}/api/inventory`, {
+                headers: { "ngrok-skip-browser-warning": "69420" }
+            });
+            
             inventory = await res.json();
             renderTable();
         } catch (e) {
+            console.error(e); // This will now show the real error in console if it fails again
             document.getElementById('table-body').innerHTML = `<tr><td colspan="6" style="color:red">Connection Error. Check Ngrok/Backend.</td></tr>`;
         }
     }
@@ -126,7 +131,10 @@
         viz.innerHTML = '<div style="color:#aaa">Pinging Nodes...</div>';
 
         try {
-            const res = await fetch(`${API_BASE}/api/scan/${id}`, { method:'POST' });
+            const res = await fetch(`${API_BASE}/api/scan/${id}`, { 
+            method:'POST',
+            headers: { "ngrok-skip-browser-warning": "69420" }
+            });
             const data = await res.json();
 
             // LOG output
