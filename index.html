@@ -18,6 +18,7 @@
             --text-muted: #a1a1aa;    
             --success: #10b981;
             --danger: #ef4444;
+            --modal-bg: rgba(0, 0, 0, 0.85);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,7 +41,7 @@
         .branding { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 600; color: white; }
         .branding i { color: var(--primary); }
 
-        .actions { display: flex; gap: 15px; }
+        .actions { display: flex; gap: 15px; align-items: center; }
         .search-container { position: relative; width: 350px; }
         .search-input {
             width: 100%; background: var(--bg-card); border: 1px solid var(--border);
@@ -63,6 +64,13 @@
         }
         .btn-inspect:hover { background: rgba(99, 102, 241, 0.25); color: white; }
 
+        .btn-settings {
+            background: rgba(255, 255, 255, 0.05); color: var(--text-muted);
+            border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .btn-settings:hover { color: white; border-color: var(--text-muted); }
+
         /* --- MAIN TABLE --- */
         .table-wrapper {
             flex: 1; overflow-y: auto; border: 1px solid var(--border);
@@ -77,6 +85,30 @@
         td { padding: 18px 24px; font-size: 0.95rem; border-bottom: 1px solid var(--border); color: var(--text-main); }
         tbody tr:hover { background: rgba(255,255,255,0.03); }
         .font-mono { font-family: 'JetBrains Mono', monospace; color: #d4d4d8; font-size: 0.9rem; }
+
+        /* --- API SETTINGS MODAL --- */
+        #settingsModal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-bg); z-index: 9999;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: var(--bg-panel); border: 1px solid var(--border);
+            width: 400px; padding: 30px; border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .modal-content h3 { margin-top: 0; margin-bottom: 15px; color: white; }
+        .modal-content label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
+        .modal-content input {
+            width: 100%; padding: 12px; margin-bottom: 20px;
+            background: #1c1c1f; border: 1px solid var(--border);
+            color: white; border-radius: 6px; box-sizing: border-box;
+        }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .btn-save:hover { opacity: 0.9; }
 
         /* --- DIAGNOSTICS SLIDE PANEL --- */
         .slide-panel {
@@ -163,6 +195,9 @@
                         <i data-lucide="search" class="search-icon" width="16"></i>
                         <input type="text" id="searchInput" class="search-input" placeholder="Search Client, IP, Location..." oninput="filterTable()">
                     </div>
+                    <button class="btn btn-settings" onclick="openSettings()">
+                        <i data-lucide="settings-2" width="16"></i> API Settings
+                    </button>
                     <button class="btn" onclick="document.getElementById('csvInput').click()">
                         <i data-lucide="upload-cloud" width="16"></i>
                         Import CSV
@@ -192,6 +227,20 @@
         </div>
     </div>
 
+    <!-- API SETTINGS MODAL -->
+    <div id="settingsModal">
+        <div class="modal-content">
+            <h3>⚙️ API Configuration</h3>
+            <label>Base API URL</label>
+            <input type="text" id="apiUrlInput" placeholder="http://localhost:8000">
+            <div class="modal-actions">
+                <button class="btn" onclick="closeSettings()">Cancel</button>
+                <button class="btn-save" onclick="saveSettings()">Save & Reload</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIAGNOSTICS SLIDE PANEL -->
     <div id="diagPanel" class="slide-panel">
         <div class="panel-header">
             <div class="panel-title">
@@ -252,7 +301,7 @@
                     </div>
                     <div class="status-result">
                         <div class="status-text" id="res-status">--</div>
-                        <div style="color: #a1a1aa; font-size: 0.9rem;" id="res-cause">--</div>
+                        <div style="color: #a1a1aa; font-size: 0.9rem; margin-top: 5px;" id="res-cause">--</div>
                     </div>
                 </div>
             </div>
@@ -374,14 +423,23 @@
                 
                 document.getElementById('resultsArea').style.display = 'block';
                 const statusEl = document.getElementById('res-status');
-                statusEl.innerText = data.final_status;
                 
-                statusEl.style.color = data.final_status.includes('UP') ? '#10b981' : (data.final_status.includes('UNSTABLE') ? '#f59e0b' : '#ef4444');
-                document.getElementById('res-cause').innerText = data.cause;
+                // FIX: Backend returns 'overall_status', not 'final_status'
+                statusEl.innerText = data.overall_status;
+                
+                statusEl.style.color = data.overall_status.includes('UP') ? '#10b981' : (data.overall_status.includes('UNSTABLE') ? '#f59e0b' : '#ef4444');
+                
+                // FIX: Backend returns array of recommendations
+                const causeEl = document.getElementById('res-cause');
+                causeEl.innerText = data.recommendations ? data.recommendations.join('. ') : 'No specific cause.';
 
-                setNode('n-client', data.topology?.client?.status);
-                setNode('n-base', data.topology?.base?.status);
-                setNode('n-gw', data.topology?.gw?.status);
+                // FIX: Backend returns diagnostics.ping.client.status
+                const diags = data.diagnostics || {};
+                const pingData = diags.ping || {};
+                
+                setNode('n-client', pingData.client?.status);
+                setNode('n-base', pingData.base?.status);
+                setNode('n-gw', pingData.gateway?.status);
 
             } catch (e) {
                 alert("Diagnostics Failed: " + e.message);
@@ -397,6 +455,27 @@
             el.className = 'node';
             if (status === 'UP') el.classList.add('up');
             else if (status === 'DOWN') el.classList.add('down');
+        }
+
+        // --- API SETTINGS LOGIC ---
+        function openSettings() {
+            const modal = document.getElementById('settingsModal');
+            const input = document.getElementById('apiUrlInput');
+            input.value = localStorage.getItem('NOC_CUSTOM_API') || API_BASE;
+            modal.style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function saveSettings() {
+            const input = document.getElementById('apiUrlInput').value.trim();
+            if (!input) return;
+
+            localStorage.setItem('NOC_CUSTOM_API', input);
+            alert("API URL Saved! Page will reload.");
+            window.location.reload();
         }
 
         // --- SMART CSV PARSER ---
@@ -452,7 +531,7 @@
                         "Link_Name": col[idx.linkName] || col[idx.ip],
                         "Client_IP": col[idx.ip],
                         "BTS_IP": col[idx.baseIp],
-                        "Location": col[idx.location],
+                        "Location_Branch": col[idx.location],
                         "District": col[idx.district],
                         "SL": col[idx.sl],
                         "Radio_Model": col[idx.model],
@@ -466,8 +545,8 @@
 
                 if (payload.length === 0) return alert("Could not match columns! Check CSV headers.");
 
-                // 4. Send
-                await fetch(`${API_BASE}/api/inventory`, {
+                // 4. Send to Bulk Import API
+                await fetch(`${API_BASE}/api/inventory/bulk`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
