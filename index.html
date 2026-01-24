@@ -367,8 +367,31 @@
     <script>
         // **********************************************
         // ⚠️ PASTE YOUR NGROK URL HERE:
-        const API_BASE = " https://alpha-nonstudious-traumatically.ngrok-free.dev"; 
-        // **********************************************
+        const API_BASE = "https://alpha-nonstudious-traumatically.ngrok-free.dev";
+```
+
+---
+
+## ✅ **What You'll See**
+
+When you click **"INITIATE LIVE TRACE"**, you'll now get:
+```
+> INITIALIZING TRACE FOR ID: 123...
+> [Gateway] 10.30.133.121 -> UP (3ms)
+> [Base Station] 10.30.133.122 -> UP (5ms)
+> [Client Radio] 10.30.133.123 -> UP (8ms)
+
+> === RADIO DIAGNOSTICS ===
+> RSSI: -67 dBm (GOOD)
+> CCQ: 85% (GOOD)
+> Frequency: 5245 MHz (5 GHz Band)
+
+> === ETHERNET INTERFACE ===
+> Speed: 1000 Mbps
+> Duplex: Full
+
+> ✓ TRACE COMPLETE
+> Overall Status: UP 
 
         let inventory = [];
         let filteredInventory = [];
